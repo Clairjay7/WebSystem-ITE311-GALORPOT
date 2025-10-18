@@ -111,7 +111,7 @@ $logo = base_url('https://pnghq.com/wp-content/uploads/student-icon-png-free-hig
 				<div class="card-body">
 					<h5 class="card-title mb-2">Announcements / Notices</h5>
 					<p class="text-muted mb-3">School or teacher updates</p>
-					<a href="#" class="btn btn-sm btn-outline-primary">Open</a>
+					<a href="<?= site_url('/announcements') ?>" class="btn btn-sm btn-outline-primary">Open</a>
 				</div>
 			</div>
 		</div>

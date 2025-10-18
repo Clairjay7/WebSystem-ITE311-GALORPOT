@@ -37,3 +37,6 @@ $routes->get('/student/grades', 'Student::grades');
 $routes->get('/admin/users', 'Admin::users');
 $routes->get('/admin/reports', 'Admin::reports');
 $routes->get('/admin/settings', 'Admin::settings');
+
+// Announcement routes
+$routes->get('/announcements', 'Announcement::index');
