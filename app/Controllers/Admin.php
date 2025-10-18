@@ -40,6 +40,19 @@ class Admin extends BaseController
         }
         return view('admin/settings');
     }
+
+    public function dashboard()
+    {
+        if ($redirect = $this->ensureAdmin()) {
+            return $redirect;
+        }
+        
+        $data = [
+            'title' => 'Admin Dashboard'
+        ];
+        
+        return view('admin_dashboard', $data);
+    }
 }
 
 

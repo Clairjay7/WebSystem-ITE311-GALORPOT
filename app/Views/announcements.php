@@ -11,6 +11,11 @@
             <i class="fas fa-bullhorn me-2 text-primary"></i>
             Announcements
         </h2>
+        <?php if (session()->get('isLoggedIn')): ?>
+            <a href="<?= site_url('/logout') ?>" class="btn btn-outline-secondary">
+                <i class="fas fa-sign-out-alt me-1"></i>Logout
+            </a>
+        <?php endif; ?>
     </div>
 
     <?php if (empty($announcements)): ?>

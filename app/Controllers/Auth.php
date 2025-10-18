@@ -116,10 +116,19 @@ class Auth extends BaseController
                         ];
                         session()->set($sessionData);
 
-                        // Friendly welcome message on unified dashboard
+                        // Friendly welcome message
                         session()->setFlashdata('welcome', 'Welcome back, ' . $user['name'] . '!');
 
-                        return redirect()->to('/dashboard');
+                        // Role-based redirection
+                        switch ($user['role']) {
+                            case 'admin':
+                                return redirect()->to('/admin/dashboard');
+                            case 'instructor':
+                                return redirect()->to('/teacher/dashboard');
+                            case 'student':
+                            default:
+                                return redirect()->to('/announcements');
+                        }
                     } else {
                         session()->setFlashdata('error', 'Wrong password.');
                         return redirect()->to('/login');

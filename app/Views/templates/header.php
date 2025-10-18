@@ -17,7 +17,28 @@ $roleLabel = $role ? strtoupper($role) : '';
       <ul class="navbar-nav ms-auto">
         <li class="nav-item">
           <?php if ($isLoggedIn): ?>
-            <a class="nav-link<?= $uri->getPath() === 'dashboard' ? ' active' : '' ?>" href="<?= site_url('/dashboard') ?>">Dashboard</a>
+            <?php
+            // Role-based dashboard links
+            $dashboardUrl = '/dashboard'; // default fallback
+            $isActive = false;
+            
+            switch ($role) {
+                case 'admin':
+                    $dashboardUrl = '/admin/dashboard';
+                    $isActive = $uri->getPath() === 'admin/dashboard';
+                    break;
+                case 'instructor':
+                    $dashboardUrl = '/teacher/dashboard';
+                    $isActive = $uri->getPath() === 'teacher/dashboard';
+                    break;
+                case 'student':
+                default:
+                    $dashboardUrl = '/announcements';
+                    $isActive = $uri->getPath() === 'announcements';
+                    break;
+            }
+            ?>
+            <a class="nav-link<?= $isActive ? ' active' : '' ?>" href="<?= site_url($dashboardUrl) ?>">Dashboard</a>
           <?php else: ?>
             <a class="nav-link<?= in_array($uri->getPath(), ['', 'home'], true) ? ' active' : '' ?>" href="<?= site_url('/home') ?>">Home</a>
           <?php endif; ?>
@@ -30,7 +51,11 @@ $roleLabel = $role ? strtoupper($role) : '';
         </li>
 
         <?php if ($isLoggedIn): ?>
-          <!-- When logged in: keep header simple as requested -->
+          <li class="nav-item">
+            <a class="nav-link" href="<?= site_url('/logout') ?>">
+              <i class="fas fa-sign-out-alt me-1"></i>Logout
+            </a>
+          </li>
         <?php else: ?>
           <?php if ($uri->getPath() !== 'login'): ?>
             <li class="nav-item">

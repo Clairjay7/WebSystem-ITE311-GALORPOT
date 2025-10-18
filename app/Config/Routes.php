@@ -34,9 +34,13 @@ $routes->get('/student/assignments', 'Student::assignments');
 $routes->get('/student/grades', 'Student::grades');
 
 // Admin routes
+$routes->get('/admin/dashboard', 'Admin::dashboard');
 $routes->get('/admin/users', 'Admin::users');
 $routes->get('/admin/reports', 'Admin::reports');
 $routes->get('/admin/settings', 'Admin::settings');
+
+// Teacher routes
+$routes->get('/teacher/dashboard', 'Teacher::dashboard');
 
 // Announcement routes
 $routes->get('/announcements', 'Announcement::index');
