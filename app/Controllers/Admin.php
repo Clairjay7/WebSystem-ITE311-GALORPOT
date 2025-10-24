@@ -12,7 +12,7 @@ class Admin extends BaseController
         $role = strtolower((string) session('role'));
         if ($role !== 'admin') {
             session()->setFlashdata('error', 'Unauthorized. Admin access only.');
-            return redirect()->to('/dashboard');
+            return redirect()->to('/announcements');
         }
         return null;
     }

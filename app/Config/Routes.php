@@ -28,18 +28,20 @@ $routes->get('/instructor/my-classes', 'Instructor::myClasses');
 $routes->get('/instructor/submissions', 'Instructor::submissions');
 $routes->get('/instructor/attendance', 'Instructor::attendance');
 
-// Student routes
-$routes->get('/student/courses', 'Student::courses');
-$routes->get('/student/assignments', 'Student::assignments');
-$routes->get('/student/grades', 'Student::grades');
+// Student routes - Protected by RoleAuth filter
+$routes->group('student', ['filter' => 'roleauth'], static function ($routes) {
+    $routes->get('courses', 'Student::courses');
+    $routes->get('assignments', 'Student::assignments');
+    $routes->get('grades', 'Student::grades');
+});
 
-// Admin routes
+// Admin routes - Temporarily remove filter for testing
 $routes->get('/admin/dashboard', 'Admin::dashboard');
 $routes->get('/admin/users', 'Admin::users');
 $routes->get('/admin/reports', 'Admin::reports');
 $routes->get('/admin/settings', 'Admin::settings');
 
-// Teacher routes
+// Teacher routes - Temporarily remove filter for testing
 $routes->get('/teacher/dashboard', 'Teacher::dashboard');
 
 // Announcement routes

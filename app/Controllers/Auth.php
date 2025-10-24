@@ -104,6 +104,9 @@ class Auth extends BaseController
                 $user = $model->where('email', $this->request->getPost('email'))->first();
 
                 if ($user) {
+                    // Debug: Log user data
+                    error_log("LOGIN DEBUG: Found user - Name: {$user['name']}, Email: {$user['email']}, Role: {$user['role']}");
+                    
                     if (password_verify($this->request->getPost('password'), $user['password'])) {
                         // Do not block login based on requested role; rely on stored role
                         // $requestedRole = $this->request->getPost('role');
@@ -116,17 +119,23 @@ class Auth extends BaseController
                         ];
                         session()->set($sessionData);
 
+                        // Debug: Log session data and redirection
+                        error_log("LOGIN DEBUG: Session set - Role: {$user['role']}, Redirecting based on role");
+
                         // Friendly welcome message
                         session()->setFlashdata('welcome', 'Welcome back, ' . $user['name'] . '!');
 
                         // Role-based redirection
                         switch ($user['role']) {
                             case 'admin':
+                                error_log("LOGIN DEBUG: Redirecting admin to /admin/dashboard");
                                 return redirect()->to('/admin/dashboard');
                             case 'instructor':
+                                error_log("LOGIN DEBUG: Redirecting instructor to /teacher/dashboard");
                                 return redirect()->to('/teacher/dashboard');
                             case 'student':
                             default:
+                                error_log("LOGIN DEBUG: Redirecting student to /announcements");
                                 return redirect()->to('/announcements');
                         }
                     } else {
