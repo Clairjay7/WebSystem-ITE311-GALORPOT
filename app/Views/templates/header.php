@@ -28,13 +28,13 @@ $roleLabel = $role ? strtoupper($role) : '';
                     $isActive = $uri->getPath() === 'admin/dashboard';
                     break;
                 case 'instructor':
-                    $dashboardUrl = '/teacher/dashboard';
-                    $isActive = $uri->getPath() === 'teacher/dashboard';
+                    $dashboardUrl = '/dashboard';
+                    $isActive = $uri->getPath() === 'dashboard';
                     break;
                 case 'student':
                 default:
-                    $dashboardUrl = '/announcements';
-                    $isActive = $uri->getPath() === 'announcements';
+                    $dashboardUrl = '/dashboard';
+                    $isActive = $uri->getPath() === 'dashboard';
                     break;
             }
             ?>

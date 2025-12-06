@@ -4,69 +4,517 @@ namespace App\Controllers;
 
 use App\Models\CourseModel;
 use App\Models\EnrollmentModel;
-use App\Models\UserModel;
+use App\Models\SchoolYearModel;
+use App\Models\TermModel;
+use App\Models\SemesterModel;
 
 class Student extends BaseController
 {
-    private function ensureStudent()
+    /**
+     * Ensure user is logged in and is a student
+     */
+    protected function ensureStudent()
     {
         if (!session()->get('isLoggedIn')) {
             return redirect()->to('/login');
         }
-        $role = strtolower((string) session('role'));
-        if ($role !== 'student' && $role !== 'admin') {
-            // allow admin to preview too; otherwise block
-            session()->setFlashdata('error', 'Unauthorized. Student access only.');
+
+        $role = strtolower((string) session()->get('role'));
+        if ($role !== 'student') {
+            session()->setFlashdata('error', 'Access denied. Student access only.');
             return redirect()->to('/dashboard');
         }
+
         return null;
     }
 
-    public function courses()
+    /**
+     * Student enrollment page - view available courses and enroll
+     */
+    public function enroll()
     {
         if ($redirect = $this->ensureStudent()) {
             return $redirect;
         }
 
-        $user_id = session()->get('id');
-        
-        // Get enrolled courses
-        $enrollmentModel = new EnrollmentModel();
-        $enrolledCourses = $enrollmentModel->getUserEnrollments($user_id);
-        
-        // Get all available courses
+        $userId = (int) session()->get('id');
         $courseModel = new CourseModel();
-        $allCourses = $courseModel->findAll();
-        
-        // Get enrolled course IDs for filtering
-        $enrolledCourseIds = array_column($enrolledCourses, 'course_id');
-        
-        // Filter available courses (exclude already enrolled)
-        $availableCourses = array_filter($allCourses, function($course) use ($enrolledCourseIds) {
-            return !in_array($course['id'], $enrolledCourseIds);
-        });
+        $enrollmentModel = new EnrollmentModel();
+        $termModel = new TermModel();
+        $schoolYearModel = new SchoolYearModel();
 
         $data = [
-            'enrolledCourses' => $enrolledCourses,
-            'availableCourses' => $availableCourses
+            'available_courses' => [],
+            'enrolled_courses' => [],
+            'pending_enrollments' => [],
+            'current_period' => null,
+            'active_school_year' => null,
         ];
 
-        return view('student/courses', $data);
+        try {
+            // Get current academic period
+            $currentPeriod = $termModel->getCurrentAcademicPeriod();
+            $data['current_period'] = $currentPeriod;
+
+            // If no active term, get active school year
+            if (!$currentPeriod) {
+                $activeSchoolYear = $schoolYearModel->getActiveSchoolYear();
+                $data['active_school_year'] = $activeSchoolYear;
+            } else {
+                // Get available courses for current term with instructor name
+                // Only show courses that have an assigned instructor
+                $allAvailableCourses = $courseModel
+                    ->select('courses.*, users.name as instructor_name')
+                    ->join('users', 'users.id = courses.instructor_id', 'inner')
+                    ->where('courses.school_year_id', $currentPeriod['school_year']['id'])
+                    ->where('courses.semester', $currentPeriod['semester']['semester_number'])
+                    ->where('courses.term', $currentPeriod['term']['term_number'])
+                    ->where('courses.instructor_id IS NOT NULL')
+                    ->findAll();
+                
+                // Filter out expired courses (where term end date has passed)
+                $today = date('Y-m-d');
+                $termModel = new TermModel();
+                $semesterModel = new SemesterModel();
+                $data['available_courses'] = [];
+                
+                foreach ($allAvailableCourses as $course) {
+                    // Only include courses with assigned instructors
+                    if (empty($course['instructor_id'])) {
+                        continue;
+                    }
+                    
+                    $semester = $semesterModel
+                        ->where('school_year_id', $course['school_year_id'])
+                        ->where('semester_number', $course['semester'])
+                        ->first();
+                    
+                    if ($semester) {
+                        $term = $termModel
+                            ->where('semester_id', $semester['id'])
+                            ->where('term_number', $course['term'])
+                            ->first();
+                        
+                        // Only include if term exists and end date hasn't passed
+                        if ($term && $term['end_date'] >= $today) {
+                            $data['available_courses'][] = $course;
+                        }
+                    }
+                }
+
+                // Check if status column exists
+                $hasStatusColumn = false;
+                try {
+                    $db = \Config\Database::connect();
+                    $columns = $db->getFieldNames('enrollments');
+                    $hasStatusColumn = in_array('status', $columns);
+                } catch (\Exception $e) {
+                    // Status column doesn't exist
+                }
+
+                // Get approved enrollments (for enrolled courses display)
+                $approvedEnrollments = [];
+                if ($hasStatusColumn) {
+                    $approvedEnrollments = $enrollmentModel
+                        ->where('user_id', $userId)
+                        ->where('school_year_id', $currentPeriod['school_year']['id'])
+                        ->where('semester', $currentPeriod['semester']['semester_number'])
+                        ->where('term', $currentPeriod['term']['term_number'])
+                        ->where('status', 'approved')
+                        ->findAll();
+                }
+
+                // Get pending enrollments (for pending display) and filter out expired courses
+                $pendingEnrollments = [];
+                if ($hasStatusColumn) {
+                    $allPending = $enrollmentModel
+                        ->select('enrollments.*, courses.title as course_title, courses.description')
+                        ->join('courses', 'courses.id = enrollments.course_id')
+                        ->where('enrollments.user_id', $userId)
+                        ->where('enrollments.school_year_id', $currentPeriod['school_year']['id'])
+                        ->where('enrollments.semester', $currentPeriod['semester']['semester_number'])
+                        ->where('enrollments.term', $currentPeriod['term']['term_number'])
+                        ->where('enrollments.status', 'pending')
+                        ->orderBy('enrollments.enrollment_date', 'DESC')
+                        ->findAll();
+                    
+                    // Filter out expired courses from pending enrollments
+                    $today = date('Y-m-d');
+                    $activePending = [];
+                    foreach ($allPending as $pending) {
+                        // Get course to check term end date
+                        $course = $courseModel->find($pending['course_id']);
+                        
+                        if ($course) {
+                            $semester = $semesterModel
+                                ->where('school_year_id', $course['school_year_id'])
+                                ->where('semester_number', $course['semester'])
+                                ->first();
+                            
+                            if ($semester) {
+                                $term = $termModel
+                                    ->where('semester_id', $semester['id'])
+                                    ->where('term_number', $course['term'])
+                                    ->first();
+                                
+                                // Only include if term exists and end date hasn't passed
+                                if ($term && $term['end_date'] >= $today) {
+                                    $activePending[] = $pending;
+                                }
+                            }
+                        }
+                    }
+                    
+                    $pendingEnrollments = $activePending;
+                }
+
+                $data['pending_enrollments'] = $pendingEnrollments;
+
+                // Get rejected enrollments (for rejected display)
+                $rejectedEnrollments = [];
+                if ($hasStatusColumn) {
+                    $allRejected = $enrollmentModel
+                        ->select('enrollments.*, courses.title as course_title, courses.description')
+                        ->join('courses', 'courses.id = enrollments.course_id')
+                        ->where('enrollments.user_id', $userId)
+                        ->where('enrollments.school_year_id', $currentPeriod['school_year']['id'])
+                        ->where('enrollments.semester', $currentPeriod['semester']['semester_number'])
+                        ->where('enrollments.term', $currentPeriod['term']['term_number'])
+                        ->where('enrollments.status', 'rejected')
+                        ->orderBy('enrollments.enrollment_date', 'DESC')
+                        ->findAll();
+                    
+                    // Filter out expired courses from rejected enrollments
+                    $today = date('Y-m-d');
+                    $activeRejected = [];
+                    foreach ($allRejected as $rejected) {
+                        // Get course to check term end date
+                        $course = $courseModel->find($rejected['course_id']);
+                        
+                        if ($course) {
+                            $semester = $semesterModel
+                                ->where('school_year_id', $course['school_year_id'])
+                                ->where('semester_number', $course['semester'])
+                                ->first();
+                            
+                            if ($semester) {
+                                $term = $termModel
+                                    ->where('semester_id', $semester['id'])
+                                    ->where('term_number', $course['term'])
+                                    ->first();
+                                
+                                // Only include if term exists and end date hasn't passed
+                                if ($term && $term['end_date'] >= $today) {
+                                    $activeRejected[] = $rejected;
+                                }
+                            }
+                        }
+                    }
+                    
+                    $rejectedEnrollments = $activeRejected;
+                }
+
+                $data['rejected_enrollments'] = $rejectedEnrollments;
+
+                // Get enrolled courses (approved only) with instructor name and term end date
+                $approvedCourseIds = array_column($approvedEnrollments, 'course_id');
+                if (!empty($approvedCourseIds)) {
+                    $enrolledCourses = $courseModel->select('courses.*, users.name as instructor_name')
+                        ->join('users', 'users.id = courses.instructor_id', 'left')
+                        ->whereIn('courses.id', $approvedCourseIds)
+                        ->findAll();
+                    
+                    // Add term end date for each course and filter out expired courses
+                    $termModel = new TermModel();
+                    $semesterModel = new SemesterModel();
+                    $today = date('Y-m-d');
+                    $activeCourses = [];
+                    
+                    foreach ($enrolledCourses as &$course) {
+                        // Get semester
+                        $semester = $semesterModel
+                            ->where('school_year_id', $course['school_year_id'])
+                            ->where('semester_number', $course['semester'])
+                            ->first();
+                        
+                        if ($semester) {
+                            // Get term
+                            $term = $termModel
+                                ->where('semester_id', $semester['id'])
+                                ->where('term_number', $course['term'])
+                                ->first();
+                            
+                            if ($term) {
+                                $course['term_end_date'] = $term['end_date'];
+                                
+                                // Only include if end date hasn't passed
+                                if ($term['end_date'] >= $today) {
+                                    $activeCourses[] = $course;
+                                }
+                            }
+                        }
+                    }
+                    
+                    $data['enrolled_courses'] = $activeCourses;
+                } else {
+                    $data['enrolled_courses'] = [];
+                }
+
+                // Filter out approved AND pending enrollments from available courses
+                // Rejected enrollments should still show "Enroll Now" button (can re-enroll)
+                $pendingCourseIds = [];
+                if ($hasStatusColumn && !empty($pendingEnrollments)) {
+                    $pendingCourseIds = array_column($pendingEnrollments, 'course_id');
+                }
+                
+                // Combine approved and pending course IDs to filter out from available courses
+                $excludedCourseIds = array_merge($approvedCourseIds, $pendingCourseIds);
+                
+                if (!empty($excludedCourseIds)) {
+                    $data['available_courses'] = array_filter($data['available_courses'], function($course) use ($excludedCourseIds) {
+                        return !in_array($course['id'], $excludedCourseIds);
+                    });
+                }
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Error loading enrollment page: ' . $e->getMessage());
+            $data['error'] = 'Error loading enrollment page. Please try again later.';
+        }
+
+        return view('student/enroll', $data);
     }
 
-    public function assignments()
+    /**
+     * Student self-enrollment
+     */
+    public function selfEnroll()
     {
         if ($redirect = $this->ensureStudent()) {
             return $redirect;
         }
-        return view('student/assignments');
+
+        // Check if request is POST using CodeIgniter's is() method (case-insensitive)
+        if (!$this->request->is('post')) {
+            log_message('error', 'SELF ENROLL - Method is not POST, redirecting... Method was: ' . $this->request->getMethod());
+            return redirect()->to('/student/enroll');
+        }
+
+        log_message('info', 'SELF ENROLL - POST data: ' . json_encode($this->request->getPost()));
+
+        $userId = (int) session()->get('id');
+        $courseId = (int) $this->request->getPost('course_id');
+        $schoolYearId = (int) $this->request->getPost('school_year_id');
+        $semester = (int) $this->request->getPost('semester');
+        $term = (int) $this->request->getPost('term');
+
+        $courseModel = new CourseModel();
+        $enrollmentModel = new EnrollmentModel();
+
+        // Verify course exists for this academic period and has an assigned instructor
+        $course = $courseModel
+            ->where('id', $courseId)
+            ->where('school_year_id', $schoolYearId)
+            ->where('semester', $semester)
+            ->where('term', $term)
+            ->where('instructor_id IS NOT NULL')
+            ->first();
+
+        if (!$course) {
+            session()->setFlashdata('error', 'Course not available. This course does not have an assigned instructor yet.');
+            return redirect()->to('/student/enroll');
+        }
+
+        // Check if already enrolled (any status)
+        // Rejected enrollments can be re-enrolled
+        // Also check for expired pending enrollments
+        $existing = $enrollmentModel
+            ->where('user_id', $userId)
+            ->where('course_id', $courseId)
+            ->where('school_year_id', $schoolYearId)
+            ->where('semester', $semester)
+            ->where('term', $term)
+            ->first();
+        
+        log_message('info', 'SELF ENROLL - Existing enrollment check: ' . json_encode($existing));
+
+        if ($existing) {
+            // Check if status column exists
+            $hasStatusColumn = false;
+            try {
+                $db = \Config\Database::connect();
+                $columns = $db->getFieldNames('enrollments');
+                $hasStatusColumn = in_array('status', $columns);
+            } catch (\Exception $e) {
+                // Status column doesn't exist
+            }
+
+            if ($hasStatusColumn && isset($existing['status'])) {
+                // If status is rejected, allow re-enrollment (delete old record first)
+                if ($existing['status'] === 'rejected') {
+                    $enrollmentModel->delete($existing['id']);
+                    // Continue with enrollment below
+                } elseif ($existing['status'] === 'pending') {
+                    // Check if the pending enrollment is for an expired course
+                    $semesterModel = new SemesterModel();
+                    $termModel = new TermModel();
+                    $today = date('Y-m-d');
+                    $isExpired = false;
+                    
+                    $semester = $semesterModel
+                        ->where('school_year_id', $schoolYearId)
+                        ->where('semester_number', $semester)
+                        ->first();
+                    
+                    if ($semester) {
+                        $term = $termModel
+                            ->where('semester_id', $semester['id'])
+                            ->where('term_number', $term)
+                            ->first();
+                        
+                        // If term has expired, allow re-enrollment by deleting the old pending enrollment
+                        if ($term && $term['end_date'] < $today) {
+                            $isExpired = true;
+                            $enrollmentModel->delete($existing['id']);
+                            // Continue with enrollment below
+                        }
+                    }
+                    
+                    // If not expired, show error
+                    if (!$isExpired) {
+                        session()->setFlashdata('error', 'You already have a pending enrollment request for this course.');
+                        return redirect()->to('/student/enroll');
+                    }
+                } elseif ($existing['status'] === 'approved') {
+                    session()->setFlashdata('error', 'You are already enrolled in this course.');
+                    return redirect()->to('/student/enroll');
+                }
+            } else {
+                // If status column doesn't exist, treat as already enrolled
+                session()->setFlashdata('error', 'You are already enrolled in this course.');
+                return redirect()->to('/student/enroll');
+            }
+        }
+
+        // Create enrollment with pending status (if status column exists)
+        $enrollmentData = [
+            'user_id' => $userId,
+            'course_id' => $courseId,
+            'school_year_id' => $schoolYearId,
+            'semester' => $semester,
+            'term' => $term,
+            'enrollment_date' => date('Y-m-d H:i:s'),
+        ];
+        
+        // Add status as 'pending' if column exists
+        // IMPORTANT: If status column doesn't exist, we can't track approval status
+        try {
+            $db = \Config\Database::connect();
+            $columns = $db->getFieldNames('enrollments');
+            if (in_array('status', $columns)) {
+                $enrollmentData['status'] = 'pending';
+            } else {
+                // Status column doesn't exist - show warning
+                session()->setFlashdata('error', 'Enrollment approval system not set up. Please run database migration: php spark migrate');
+                return redirect()->to('/student/enroll');
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Error checking status column: ' . $e->getMessage());
+            session()->setFlashdata('error', 'Database error. Please contact administrator.');
+            return redirect()->to('/student/enroll');
+        }
+
+        if ($enrollmentModel->insert($enrollmentData)) {
+            session()->setFlashdata('success', 'Enrollment request submitted for ' . esc($course['title']) . '! Waiting for instructor approval.');
+        } else {
+            session()->setFlashdata('error', 'Failed to submit enrollment request. Please try again.');
+        }
+
+        return redirect()->to('/student/enroll');
     }
 
-    public function grades()
+    /**
+     * View a specific course
+     */
+    public function viewCourse($courseId = null)
     {
         if ($redirect = $this->ensureStudent()) {
             return $redirect;
         }
-        return view('student/grades');
+
+        if (!$courseId) {
+            session()->setFlashdata('error', 'Course ID is required.');
+            return redirect()->to('/dashboard');
+        }
+
+        $userId = (int) session()->get('id');
+        $courseModel = new CourseModel();
+        $enrollmentModel = new EnrollmentModel();
+
+        try {
+            $course = $courseModel->find($courseId);
+
+            if (!$course) {
+                session()->setFlashdata('error', 'Course not found.');
+                return redirect()->to('/dashboard');
+            }
+
+            // Verify that the student is enrolled in this course
+            $enrollment = $enrollmentModel
+                ->where('user_id', $userId)
+                ->where('course_id', $courseId)
+                ->where('school_year_id', $course['school_year_id'])
+                ->where('semester', $course['semester'])
+                ->where('term', $course['term'])
+                ->first();
+
+            if (!$enrollment) {
+                session()->setFlashdata('error', 'You are not enrolled in this course.');
+                return redirect()->to('/dashboard');
+            }
+
+            // Get instructor name
+            $userModel = new \App\Models\UserModel();
+            $instructor = $userModel->find($course['instructor_id']);
+
+            // Get school year
+            $schoolYearModel = new SchoolYearModel();
+            $schoolYear = $schoolYearModel->find($course['school_year_id']);
+
+            // Get term end date
+            $termModel = new TermModel();
+            $semesterModel = new SemesterModel();
+            $termEndDate = null;
+            
+            $semester = $semesterModel
+                ->where('school_year_id', $course['school_year_id'])
+                ->where('semester_number', $course['semester'])
+                ->first();
+            
+            if ($semester) {
+                $term = $termModel
+                    ->where('semester_id', $semester['id'])
+                    ->where('term_number', $course['term'])
+                    ->first();
+                
+                if ($term) {
+                    $termEndDate = $term['end_date'];
+                }
+            }
+
+            $data = [
+                'course' => $course,
+                'enrollment' => $enrollment,
+                'instructor' => $instructor,
+                'school_year' => $schoolYear,
+                'term_end_date' => $termEndDate,
+            ];
+
+            return view('student/view_course', $data);
+        } catch (\Exception $e) {
+            log_message('error', 'Error loading course: ' . $e->getMessage());
+            session()->setFlashdata('error', 'Error loading course.');
+            return redirect()->to('/dashboard');
+        }
     }
 }
+

@@ -12,9 +12,7 @@
 <?php $uri = service('uri'); ?>
 <?= $this->include('templates/header') ?>
 
-<div class="container mt-5 text-center">
-    <?= $this->renderSection('content') ?>
-</div>
+<?= $this->renderSection('content') ?>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js" referrerpolicy="no-referrer"></script>
 </body>

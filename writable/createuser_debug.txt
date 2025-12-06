@@ -1,0 +1,77 @@
+2025-12-02 18:57:24 - CREATE USER CALLED
+Method: POST
+POST: {"csrf_test_name":"7a00a40c8789d3d6f203b550d10c6d07","name":"Jul Bolando","email":"jaysusakalam@gmail.com","password":"123123","role":"student"}
+
+2025-12-02 18:58:40 - CREATE USER CALLED
+Method: POST
+POST: {"csrf_test_name":"7a00a40c8789d3d6f203b550d10c6d07","name":"Jul Bolando","email":"jaysusakalam@gmail.com","password":"123123","role":"student"}
+
+2025-12-02 18:58:50 - CREATE USER CALLED
+Method: POST
+POST: {"csrf_test_name":"7a00a40c8789d3d6f203b550d10c6d07","name":"Jul Bolando","email":"jaysusakalam@gmail.com","password":"123123","role":"instructor"}
+
+2025-12-02 19:00:17 - CREATE USER CALLED
+Method: POST
+POST: {"csrf_test_name":"7a00a40c8789d3d6f203b550d10c6d07","name":"Jul Bolando","email":"jaysusakalam@gmail.com","password":"123123","role":"student"}
+
+2025-12-02 19:00:40 - CREATE USER CALLED
+Method: POST
+POST: {"csrf_test_name":"7a00a40c8789d3d6f203b550d10c6d07","name":"Jul Bolando","email":"jaysusakalam@gmail.com","password":"123123","role":"student"}
+
+2025-12-02 19:02:28 - CREATE USER CALLED
+Method: POST
+POST: {"csrf_test_name":"7a00a40c8789d3d6f203b550d10c6d07","name":"Jul Bolando","email":"jaysusakalam@gmail.com","password":"123123","role":"student"}
+
+PASSED ADMIN CHECK
+NOT POST - REDIRECTING
+
+2025-12-02 19:03:24 - CREATE USER CALLED
+Method: POST (type: string)
+Method === 'post': NO
+Method !== 'post': YES
+POST: {"csrf_test_name":"7a00a40c8789d3d6f203b550d10c6d07","name":"Jul Bolando","email":"jaysusakalam@gmail.com","password":"123123","role":"student"}
+
+PASSED ADMIN CHECK
+Checking method: POST (lowercase: post)
+PASSED POST CHECK
+PASSED VALIDATION
+ATTEMPTING INSERT...
+SUCCESS! User ID: 6
+
+2025-12-03 15:20:30 - CREATE USER CALLED
+Method: POST (type: string)
+Method === 'post': NO
+Method !== 'post': YES
+POST: {"csrf_test_name":"a49d60d5d8fa9f0877e437a50144e68d","name":"Jul Bolando","email":"jaysusakalam@gmail.com","password":"123123","role":"student"}
+
+PASSED ADMIN CHECK
+Checking method: POST (lowercase: post)
+PASSED POST CHECK
+VALIDATION FAILED: {"email":"The email field must contain a unique value."}
+
+2025-12-03 15:20:47 - CREATE USER CALLED
+Method: POST (type: string)
+Method === 'post': NO
+Method !== 'post': YES
+POST: {"csrf_test_name":"a49d60d5d8fa9f0877e437a50144e68d","name":"dasdsadas","email":"jaysusakalam1@gmail.com","password":"123123","role":"student"}
+
+PASSED ADMIN CHECK
+Checking method: POST (lowercase: post)
+PASSED POST CHECK
+PASSED VALIDATION
+ATTEMPTING INSERT...
+SUCCESS! User ID: 7
+
+2025-12-03 17:43:20 - CREATE USER CALLED
+Method: POST (type: string)
+Method === 'post': NO
+Method !== 'post': YES
+POST: {"csrf_test_name":"0aebadaefaf79b4c33e63a2774a9eab6","name":"dsad","email":"jaysusak4242alam@gmail.com","password":"123123","role":"student"}
+
+PASSED ADMIN CHECK
+Checking method: POST (lowercase: post)
+PASSED POST CHECK
+PASSED VALIDATION
+ATTEMPTING INSERT...
+SUCCESS! User ID: 8
+

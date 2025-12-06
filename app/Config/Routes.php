@@ -5,10 +5,22 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'Home::index');
+// Redirect root to dashboard if logged in, otherwise to login
+$routes->get('/', function() {
+    if (session()->get('isLoggedIn')) {
+        return redirect()->to('/dashboard');
+    }
+    return redirect()->to('/login');
+});
+
 $routes->get('/about', 'Home::about');
 $routes->get('/contact', 'Home::contact');
-$routes->get('/home', 'Home::index');
+$routes->get('/home', function() {
+    if (session()->get('isLoggedIn')) {
+        return redirect()->to('/dashboard');
+    }
+    return redirect()->to('/login');
+});
 // Auth routes
 $routes->get('/register', 'Auth::register');
 $routes->post('/register', 'Auth::register');
@@ -17,32 +29,52 @@ $routes->get('/login', 'Auth::login');
 $routes->post('/login', 'Auth::login');
 
 $routes->get('/logout', 'Auth::logout');
-$routes->get('/dashboard', 'Auth::dashboard');
+// Dashboard route
+$routes->get('/dashboard', 'Dashboard::index');
 $routes->get('/seed-defaults', 'Auth::seedDefaults');
 
-// Course routes
-$routes->post('/course/enroll', 'Course::enroll');
-
-// Instructor routes
-$routes->get('/instructor/my-classes', 'Instructor::myClasses');
-$routes->get('/instructor/submissions', 'Instructor::submissions');
-$routes->get('/instructor/attendance', 'Instructor::attendance');
-
-// Student routes - Protected by RoleAuth filter
-$routes->group('student', ['filter' => 'roleauth'], static function ($routes) {
-    $routes->get('courses', 'Student::courses');
-    $routes->get('assignments', 'Student::assignments');
-    $routes->get('grades', 'Student::grades');
-});
-
-// Admin routes - Temporarily remove filter for testing
+// Admin routes
 $routes->get('/admin/dashboard', 'Admin::dashboard');
 $routes->get('/admin/users', 'Admin::users');
+$routes->post('/admin/users/create', 'Admin::createUser');
+$routes->get('/admin/users/test', 'Admin::testCreateUser'); // TEST ROUTE
+$routes->post('/admin/users/update', 'Admin::updateUser');
+$routes->post('/admin/users/delete', 'Admin::deleteUser');
 $routes->get('/admin/reports', 'Admin::reports');
 $routes->get('/admin/settings', 'Admin::settings');
 
-// Teacher routes - Temporarily remove filter for testing
-$routes->get('/teacher/dashboard', 'Teacher::dashboard');
+// Academic structure routes (Admin only)
+$routes->get('/academic', 'AcademicController::index');
+$routes->post('/academic/school-year/create', 'AcademicController::createSchoolYear');
+$routes->post('/academic/term/update-dates', 'AcademicController::updateTermDates');
+$routes->post('/academic/school-year/set-active', 'AcademicController::setActiveSchoolYear');
+$routes->get('/academic/current-period', 'AcademicController::getCurrentPeriod');
 
-// Announcement routes
-$routes->get('/announcements', 'Announcement::index');
+// Course management routes
+$routes->get('/admin/courses', 'Admin::courses');
+$routes->post('/admin/courses/create', 'Admin::createCourse');
+$routes->post('/admin/courses/update', 'Admin::updateCourse');
+$routes->post('/admin/courses/delete', 'Admin::deleteCourse');
+
+// Enrollment routes
+$routes->get('/admin/enrollments', 'Admin::enrollments');
+$routes->post('/admin/enrollments/create', 'Admin::createEnrollment');
+$routes->post('/admin/enrollments/delete', 'Admin::deleteEnrollment');
+
+// Teacher assignment routes
+$routes->get('/admin/teacher-assignments', 'Admin::teacherAssignments');
+$routes->post('/admin/teacher-assignments/create', 'Admin::createTeacherAssignment');
+$routes->post('/admin/teacher-assignments/delete', 'Admin::deleteTeacherAssignment');
+
+// Student routes
+$routes->get('/student/enroll', 'Student::enroll');
+$routes->post('/student/enroll/self-enroll', 'Student::selfEnroll');
+$routes->get('/student/course/(:num)', 'Student::viewCourse/$1');
+
+// Instructor routes
+$routes->get('/instructor/my-courses', 'Instructor::myCourses');
+$routes->get('/instructor/course/(:num)', 'Instructor::viewCourse/$1');
+$routes->post('/instructor/enroll-student', 'Instructor::enrollStudent');
+$routes->post('/instructor/unenroll-student', 'Instructor::unenrollStudent');
+$routes->post('/instructor/approve-enrollment', 'Instructor::approveEnrollment');
+$routes->post('/instructor/reject-enrollment', 'Instructor::rejectEnrollment');
