@@ -212,7 +212,10 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 						<table class="table table-hover">
 							<thead>
 								<tr>
+									<th>CN</th>
 									<th>Course</th>
+									<th>Units</th>
+									<th>Teacher</th>
 									<th>Description</th>
 									<th>Request Date</th>
 									<th>Status</th>
@@ -221,7 +224,10 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 							<tbody>
 								<?php foreach ($pending_enrollments as $pending): ?>
 									<tr>
+										<td><strong><?= esc($pending['control_number'] ?? 'N/A') ?></strong></td>
 										<td><strong><?= esc($pending['course_title']) ?></strong></td>
+										<td><span class="badge bg-info"><?= esc($pending['units'] ?? '0') ?> units</span></td>
+										<td><?= esc($pending['instructor_name'] ?? 'N/A') ?></td>
 										<td><?= esc($pending['description'] ?? 'N/A') ?></td>
 										<td><?= date('M d, Y', strtotime($pending['enrollment_date'])) ?></td>
 										<td><span class="badge bg-warning">Pending Approval</span></td>
@@ -284,7 +290,7 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 		<?php if (isset($enrollments) && !empty($enrollments)): ?>
 			<div class="card mt-4">
 				<div class="card-header bg-success text-white">
-					<h5 class="mb-0"><i class="fas fa-check-circle"></i> My Enrolled Courses (Approved - Current Term)</h5>
+					<h5 class="mb-0"><i class="fas fa-check-circle"></i> My Enrolled Courses (Approved)</h5>
 				</div>
 				<div class="card-body">
 					<div class="table-responsive">
@@ -357,14 +363,16 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 		<?php elseif (isset($assigned_courses) && !empty($assigned_courses)): ?>
 			<div class="card mt-4">
 				<div class="card-header">
-					<h5 class="mb-0">My Assigned Courses (Current Term)</h5>
+					<h5 class="mb-0">My Assigned Courses</h5>
 				</div>
 				<div class="card-body">
 					<div class="table-responsive">
 						<table class="table table-hover">
 							<thead>
 								<tr>
+									<th>CN</th>
 									<th>Course</th>
+									<th>Units</th>
 									<th>Description</th>
 									<th>Actions</th>
 								</tr>
@@ -372,7 +380,9 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 							<tbody>
 								<?php foreach ($assigned_courses as $course): ?>
 									<tr>
+										<td><strong><?= esc($course['control_number'] ?? 'N/A') ?></strong></td>
 										<td><?= esc($course['title']) ?></td>
+										<td><span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span></td>
 										<td><?= esc($course['description'] ?? 'N/A') ?></td>
 										<td>
 											<a href="<?= site_url('/instructor/course/' . $course['id']) ?>" class="btn btn-sm btn-primary">
@@ -387,9 +397,68 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 				</div>
 			</div>
 		<?php endif; ?>
+		
+		<!-- Completed Courses -->
+		<?php if (isset($completed_courses) && !empty($completed_courses)): ?>
+			<div class="card mt-4 border-secondary">
+				<div class="card-header bg-secondary text-white">
+					<h5 class="mb-0"><i class="fas fa-check-circle"></i> Completed Courses</h5>
+				</div>
+				<div class="card-body">
+					<div class="alert alert-info mb-3">
+						<i class="fas fa-info-circle"></i> These courses have been completed. You can still view them for reference.
+					</div>
+					<div class="table-responsive">
+						<table class="table table-hover">
+							<thead>
+								<tr>
+									<th>CN</th>
+									<th>Course</th>
+									<th>Units</th>
+									<th>School Year</th>
+									<th>Semester</th>
+									<th>Term</th>
+									<th>End Date</th>
+									<th>Status</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ($completed_courses as $course): ?>
+									<tr class="table-secondary">
+										<td><strong><?= esc($course['control_number'] ?? 'N/A') ?></strong></td>
+										<td><?= esc($course['title']) ?></td>
+										<td><span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span></td>
+										<td><?= esc($course['school_year'] ?? 'N/A') ?></td>
+										<td>Semester <?= $course['semester'] ?? 'N/A' ?></td>
+										<td>Term <?= $course['term'] ?? 'N/A' ?></td>
+										<td>
+											<?php if (isset($course['term_end_date'])): ?>
+												<i class="fas fa-calendar-times text-warning"></i> <?= date('M d, Y', strtotime($course['term_end_date'])) ?>
+											<?php else: ?>
+												<span class="text-muted">N/A</span>
+											<?php endif; ?>
+										</td>
+										<td><span class="badge bg-secondary">COMPLETED</span></td>
+										<td>
+											<a href="<?= site_url('/instructor/course/' . $course['id']) ?>" class="btn btn-sm btn-outline-primary">
+												<i class="fas fa-eye"></i> View Course
+											</a>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		<?php endif; ?>
 		<div class="row g-3 mt-4">
 			<div class="col-md-4">
-				<div class="card h-100"><div class="card-body"><h5 class="card-title mb-2">My Classes</h5><p class="text-muted mb-3">Manage classes and materials</p><a href="<?= site_url('/instructor/my-classes') ?>" class="btn btn-sm btn-outline-primary">Open</a></div></div>
+				<div class="card h-100"><div class="card-body"><h5 class="card-title mb-2">My Classes</h5><p class="text-muted mb-3">Manage classes and materials</p><a href="<?= site_url('/instructor/my-courses') ?>" class="btn btn-sm btn-outline-primary">Open</a></div></div>
+			</div>
+			<div class="col-md-4">
+				<div class="card h-100"><div class="card-body"><h5 class="card-title mb-2">Completed Courses</h5><p class="text-muted mb-3">View completed courses and history</p><a href="<?= site_url('/instructor/completed-courses') ?>" class="btn btn-sm btn-outline-secondary">Open</a></div></div>
 			</div>
 			<div class="col-md-4">
 				<div class="card h-100"><div class="card-body"><h5 class="card-title mb-2">Submissions</h5><p class="text-muted mb-3">Review and grade student work</p><a href="<?= site_url('/instructor/submissions') ?>" class="btn btn-sm btn-outline-primary">Open</a></div></div>
@@ -426,17 +495,6 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 			<div class="col-md-3">
 				<div class="card h-100">
 					<div class="card-body">
-						<h5 class="card-title mb-2">Enrollments</h5>
-						<p class="text-muted mb-3">Manage student enrollments</p>
-						<a href="<?= site_url('/admin/enrollments') ?>" class="btn btn-sm btn-outline-primary">
-							Open
-						</a>
-					</div>
-				</div>
-			</div>
-			<div class="col-md-3">
-				<div class="card h-100">
-					<div class="card-body">
 						<h5 class="card-title mb-2">Teacher Assignments</h5>
 						<p class="text-muted mb-3">Assign teachers to courses</p>
 						<a href="<?= site_url('/admin/teacher-assignments') ?>" class="btn btn-sm btn-outline-primary">
@@ -461,6 +519,17 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 			<div class="col-md-4">
 				<div class="card h-100">
 					<div class="card-body">
+						<h5 class="card-title mb-2">Completed Courses</h5>
+						<p class="text-muted mb-3">View completed courses and history</p>
+						<a href="<?= site_url('/admin/completed-courses') ?>" class="btn btn-sm btn-outline-secondary">
+							Open
+						</a>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="card h-100">
+					<div class="card-body">
 						<h5 class="card-title mb-2">Reports</h5>
 						<p class="text-muted mb-3">System and academic reports</p>
 						<button class="btn btn-sm btn-outline-primary" disabled>
@@ -469,6 +538,8 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 					</div>
 				</div>
 			</div>
+		</div>
+		<div class="row g-3 mt-2">
 			<div class="col-md-4">
 				<div class="card h-100">
 					<div class="card-body">
@@ -481,6 +552,64 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 				</div>
 			</div>
 		</div>
+		
+		<!-- Completed Courses -->
+		<?php if (isset($completed_courses) && !empty($completed_courses)): ?>
+			<div class="card mt-4 border-secondary">
+				<div class="card-header bg-secondary text-white">
+					<h5 class="mb-0"><i class="fas fa-check-circle"></i> Completed Courses</h5>
+				</div>
+				<div class="card-body">
+					<div class="alert alert-info mb-3">
+						<i class="fas fa-info-circle"></i> These courses have been completed. You can still view them for reference.
+					</div>
+					<div class="table-responsive">
+						<table class="table table-hover">
+							<thead>
+								<tr>
+									<th>CN</th>
+									<th>Course</th>
+									<th>Units</th>
+									<th>Instructor</th>
+									<th>School Year</th>
+									<th>Semester</th>
+									<th>Term</th>
+									<th>End Date</th>
+									<th>Status</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ($completed_courses as $course): ?>
+									<tr class="table-secondary">
+										<td><strong><?= esc($course['control_number'] ?? 'N/A') ?></strong></td>
+										<td><strong><?= esc($course['title']) ?></strong></td>
+										<td><span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span></td>
+										<td><?= esc($course['instructor_name'] ?? 'N/A') ?></td>
+										<td><?= esc($course['school_year'] ?? 'N/A') ?></td>
+										<td>Semester <?= $course['semester'] ?? 'N/A' ?></td>
+										<td>Term <?= $course['term'] ?? 'N/A' ?></td>
+										<td>
+											<?php if (isset($course['term_end_date'])): ?>
+												<i class="fas fa-calendar-times text-warning"></i> <?= date('M d, Y', strtotime($course['term_end_date'])) ?>
+											<?php else: ?>
+												<span class="text-muted">N/A</span>
+											<?php endif; ?>
+										</td>
+										<td><span class="badge bg-secondary">COMPLETED</span></td>
+										<td>
+											<a href="<?= site_url('/admin/courses') ?>" class="btn btn-sm btn-outline-primary">
+												<i class="fas fa-eye"></i> View Course
+											</a>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		<?php endif; ?>
 
 		<!-- Admin User Management (Hidden by default) -->
 		<div class="mt-4 d-none" id="userManagementSection">
@@ -573,13 +702,17 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 											</td>
 											<td><?= date('M d, Y', strtotime($user['created_at'])) ?></td>
 											<td>
-												<button class="btn btn-sm btn-warning" onclick='editUser(<?= json_encode($user) ?>)'>
-													<i class="fas fa-edit"></i>
-												</button>
 												<?php if ($user['id'] != session()->get('id')): ?>
+													<button class="btn btn-sm btn-warning" onclick='editUser(<?= json_encode($user) ?>)'>
+														<i class="fas fa-edit"></i>
+													</button>
 													<button class="btn btn-sm btn-danger" onclick="deleteUser(<?= $user['id'] ?>, '<?= esc($user['name']) ?>')">
 														<i class="fas fa-trash"></i>
 													</button>
+												<?php else: ?>
+													<span class="text-muted small">
+														<i class="fas fa-info-circle"></i> Current User
+													</span>
 												<?php endif; ?>
 											</td>
 										</tr>
@@ -592,6 +725,51 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 					</div>
 				</div>
 			</div>
+			
+			<!-- Deleted Users Section -->
+			<?php if (!empty($deleted_users)): ?>
+			<div class="card mt-4">
+				<div class="card-header bg-secondary text-white">
+					<h5 class="mb-0"><i class="fas fa-trash"></i> Deleted Users</h5>
+				</div>
+				<div class="card-body">
+					<div class="table-responsive">
+						<table class="table table-striped table-hover">
+							<thead>
+								<tr>
+									<th>ID</th>
+									<th>Name</th>
+									<th>Email</th>
+									<th>Role</th>
+									<th>Deleted At</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ($deleted_users as $user): ?>
+									<tr class="table-secondary">
+										<td><?= $user['id'] ?></td>
+										<td><?= esc($user['name']) ?></td>
+										<td><?= esc($user['email']) ?></td>
+										<td>
+											<span class="badge bg-<?= $user['role'] === 'admin' ? 'danger' : ($user['role'] === 'instructor' ? 'warning' : 'info') ?>">
+												<?= ucfirst($user['role']) ?>
+											</span>
+										</td>
+										<td><?= $user['deleted_at'] ? date('M d, Y H:i', strtotime($user['deleted_at'])) : 'N/A' ?></td>
+										<td>
+											<button class="btn btn-sm btn-success" onclick="restoreUser(<?= $user['id'] ?>, '<?= esc($user['name']) ?>')">
+												<i class="fas fa-undo"></i> Restore
+											</button>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<?php endif; ?>
 		</div>
 
 		<!-- Create User Modal -->
@@ -682,6 +860,12 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 			<?= csrf_field() ?>
 			<input type="hidden" name="id" id="delete_user_id">
 		</form>
+		
+		<!-- Restore User Form (hidden) -->
+		<form method="post" action="<?= site_url('/admin/users/restore') ?>" id="restoreUserForm">
+			<?= csrf_field() ?>
+			<input type="hidden" name="id" id="restore_user_id">
+		</form>
 
 		<script>
 		// Auto-show User Management if there's a success/error message
@@ -689,7 +873,7 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 			<?php if (session()->getFlashdata('success') || session()->getFlashdata('error')): ?>
 				var section = document.getElementById('userManagementSection');
 				if (section) {
-					section.style.display = 'block';
+					section.classList.remove('d-none');
 					section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 				}
 			<?php endif; ?>
@@ -739,12 +923,14 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 
 		function toggleSection(sectionId) {
 			var section = document.getElementById(sectionId);
-			if (section.style.display === 'none') {
-				section.style.display = 'block';
-				section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-			} else {
-				section.style.display = 'none';
-				window.scrollTo({ top: 0, behavior: 'smooth' });
+			if (section) {
+				if (section.classList.contains('d-none')) {
+					section.classList.remove('d-none');
+					section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				} else {
+					section.classList.add('d-none');
+					window.scrollTo({ top: 0, behavior: 'smooth' });
+				}
 			}
 		}
 
@@ -757,9 +943,16 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 		}
 
 		function deleteUser(id, name) {
-			if (confirm('Are you sure you want to delete user: ' + name + '?')) {
+			if (confirm('Are you sure you want to mark user as deleted: ' + name + '?')) {
 				document.getElementById('delete_user_id').value = id;
 				document.getElementById('deleteUserForm').submit();
+			}
+		}
+		
+		function restoreUser(id, name) {
+			if (confirm('Are you sure you want to restore user: ' + name + '?')) {
+				document.getElementById('restore_user_id').value = id;
+				document.getElementById('restoreUserForm').submit();
 			}
 		}
 		</script>

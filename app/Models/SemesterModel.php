@@ -8,10 +8,12 @@ class SemesterModel extends Model
 {
     protected $table = 'semesters';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['school_year_id', 'semester_number', 'created_at', 'updated_at'];
+    protected $allowedFields = ['school_year_id', 'semester_number', 'created_at', 'updated_at', 'deleted_at'];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
+    protected $useSoftDeletes = true;
+    protected $deletedField = 'deleted_at';
 
     /**
      * Get semester with its terms

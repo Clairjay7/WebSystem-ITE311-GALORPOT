@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\CourseModel;
 use App\Models\TermModel;
 use App\Models\SchoolYearModel;
+use App\Models\SemesterModel;
+use App\Models\TeacherAssignmentModel;
 use App\Models\EnrollmentModel;
 use App\Models\UserModel;
 
@@ -57,25 +59,36 @@ class Instructor extends BaseController
             $activeSchoolYear = $schoolYearModel->getActiveSchoolYear();
             $data['active_school_year'] = $activeSchoolYear;
 
-            if ($currentPeriod) {
-                // Get courses where instructor is assigned for the active term
-                $courses = $courseModel
-                    ->where('instructor_id', $userId)
-                    ->where('school_year_id', $currentPeriod['school_year']['id'])
-                    ->where('semester', $currentPeriod['semester']['semester_number'])
-                    ->where('term', $currentPeriod['term']['term_number'])
+            $teacherAssignmentModel = new TeacherAssignmentModel();
+            
+            // Get all courses where instructor is assigned via instructor_id
+            $instructorCourses = $courseModel
+                ->where('instructor_id', $userId)
+                ->findAll();
+            
+            // Get ALL courses from teacher_assignments table (not just active term)
+            $allAssignments = $teacherAssignmentModel
+                ->where('teacher_id', $userId)
+                ->findAll();
+            
+            $courseIds = [];
+            if (!empty($allAssignments)) {
+                $courseIds = array_column($allAssignments, 'course_id');
+            }
+            
+            // Combine both: courses where instructor_id matches AND courses from teacher_assignments
+            $allCourseIds = array_unique(array_merge(
+                array_column($instructorCourses, 'id'),
+                $courseIds
+            ));
+            
+            if (!empty($allCourseIds)) {
+                $courses = $courseModel->whereIn('id', $allCourseIds)
                     ->orderBy('created_at', 'DESC')
                     ->findAll();
-                
                 $data['courses'] = $courses;
             } else {
-                // No active term, show all courses assigned to instructor
-                $courses = $courseModel
-                    ->where('instructor_id', $userId)
-                    ->orderBy('created_at', 'DESC')
-                    ->findAll();
-                
-                $data['courses'] = $courses;
+                $data['courses'] = [];
             }
         } catch (\Exception $e) {
             log_message('error', 'Error loading instructor courses: ' . $e->getMessage());
@@ -83,6 +96,143 @@ class Instructor extends BaseController
         }
 
         return view('instructor/my_courses', $data);
+    }
+
+    /**
+     * View all completed courses
+     */
+    public function completedCourses()
+    {
+        if ($redirect = $this->ensureInstructor()) {
+            return $redirect;
+        }
+
+        $userId = (int) session()->get('id');
+        $courseModel = new CourseModel();
+        $termModel = new TermModel();
+        $semesterModel = new SemesterModel();
+        $schoolYearModel = new SchoolYearModel();
+        $teacherAssignmentModel = new TeacherAssignmentModel();
+
+        $data = [
+            'courses' => [],
+            'current_period' => null,
+            'active_school_year' => null,
+        ];
+
+        try {
+            // Get current academic period
+            $currentPeriod = $termModel->getCurrentAcademicPeriod();
+            $data['current_period'] = $currentPeriod;
+
+            // Get active school year
+            $activeSchoolYear = $schoolYearModel->getActiveSchoolYear();
+            $data['active_school_year'] = $activeSchoolYear;
+
+            $today = date('Y-m-d');
+            $completedCourses = [];
+            $processedCourseIds = []; // Track processed course IDs to avoid duplicates
+
+            // Get all courses assigned to instructor via instructor_id (ALL school years)
+            $allInstructorCourses = $courseModel
+                ->where('instructor_id', $userId)
+                ->orderBy('created_at', 'DESC')
+                ->findAll();
+
+            // Process courses from instructor_id
+            foreach ($allInstructorCourses as $course) {
+                if (empty($course['school_year_id']) || empty($course['semester']) || empty($course['term'])) {
+                    continue;
+                }
+
+                $semester = $semesterModel
+                    ->where('school_year_id', $course['school_year_id'])
+                    ->where('semester_number', $course['semester'])
+                    ->first();
+
+                if ($semester) {
+                    $term = $termModel
+                        ->where('semester_id', $semester['id'])
+                        ->where('term_number', $course['term'])
+                        ->first();
+
+                    if ($term && $term['end_date'] && $term['end_date'] < $today) {
+                        // Course is completed - add term info
+                        $course['term_end_date'] = $term['end_date'];
+                        $course['term_start_date'] = $term['start_date'];
+                        $sy = $schoolYearModel->find($course['school_year_id']);
+                        $course['school_year'] = $sy ? $sy['school_year'] : null;
+                        $completedCourses[] = $course;
+                        $processedCourseIds[] = $course['id'];
+                    }
+                }
+            }
+
+            // Also get ALL courses from teacher_assignments (ALL school years)
+            $allAssignments = $teacherAssignmentModel
+                ->select('teacher_assignments.course_id, teacher_assignments.school_year_id, teacher_assignments.semester, teacher_assignments.term')
+                ->where('teacher_assignments.teacher_id', $userId)
+                ->findAll();
+
+            foreach ($allAssignments as $assignment) {
+                $courseId = $assignment['course_id'] ?? null;
+                if (!$courseId || in_array($courseId, $processedCourseIds)) {
+                    continue; // Skip if already processed
+                }
+                
+                $course = $courseModel->find($courseId);
+                if (!$course) {
+                    continue;
+                }
+
+                if (empty($course['school_year_id']) || empty($course['semester']) || empty($course['term'])) {
+                    continue;
+                }
+
+                $semester = $semesterModel
+                    ->where('school_year_id', $course['school_year_id'])
+                    ->where('semester_number', $course['semester'])
+                    ->first();
+
+                if ($semester) {
+                    $term = $termModel
+                        ->where('semester_id', $semester['id'])
+                        ->where('term_number', $course['term'])
+                        ->first();
+
+                    if ($term && $term['end_date'] && $term['end_date'] < $today) {
+                        // Course is completed - add term info
+                        $course['term_end_date'] = $term['end_date'];
+                        $course['term_start_date'] = $term['start_date'];
+                        $sy = $schoolYearModel->find($course['school_year_id']);
+                        $course['school_year'] = $sy ? $sy['school_year'] : null;
+                        $completedCourses[] = $course;
+                        $processedCourseIds[] = $course['id'];
+                    }
+                }
+            }
+
+            // Sort completed courses: first by school year (descending), then by end date (most recent first)
+            usort($completedCourses, function($a, $b) {
+                // First sort by school year
+                $syA = $a['school_year'] ?? '';
+                $syB = $b['school_year'] ?? '';
+                if ($syA !== $syB) {
+                    return strcmp($syB, $syA); // Descending
+                }
+                // Then by end date
+                $dateA = isset($a['term_end_date']) ? strtotime($a['term_end_date']) : 0;
+                $dateB = isset($b['term_end_date']) ? strtotime($b['term_end_date']) : 0;
+                return $dateB - $dateA; // Most recent first
+            });
+
+            $data['courses'] = $completedCourses;
+        } catch (\Exception $e) {
+            log_message('error', 'Error loading completed courses: ' . $e->getMessage());
+            $data['error'] = 'Error loading completed courses. Please try again later.';
+        }
+
+        return view('instructor/completed_courses', $data);
     }
 
     /**
@@ -101,6 +251,7 @@ class Instructor extends BaseController
 
         $userId = (int) session()->get('id');
         $courseModel = new CourseModel();
+        $termModel = new TermModel();
 
         try {
             $course = $courseModel->find($courseId);
@@ -110,8 +261,23 @@ class Instructor extends BaseController
                 return redirect()->to('/instructor/my-courses');
             }
 
-            // Verify that the instructor owns this course
-            if ($course['instructor_id'] != $userId) {
+            // Verify that the instructor owns this course (check both instructor_id and teacher_assignments)
+            $hasAccess = false;
+            if ($course['instructor_id'] == $userId) {
+                $hasAccess = true;
+            } else {
+                // Check if assigned via teacher_assignments
+                $teacherAssignmentModel = new TeacherAssignmentModel();
+                $assignment = $teacherAssignmentModel
+                    ->where('teacher_id', $userId)
+                    ->where('course_id', $courseId)
+                    ->first();
+                if ($assignment) {
+                    $hasAccess = true;
+                }
+            }
+            
+            if (!$hasAccess) {
                 session()->setFlashdata('error', 'You do not have access to this course.');
                 return redirect()->to('/instructor/my-courses');
             }
@@ -138,6 +304,35 @@ class Instructor extends BaseController
             
             $enrollments = $enrollmentsBuilder->orderBy('enrollments.enrollment_date', 'DESC')
                 ->findAll();
+            
+            // Get term start and end dates from Academic Structure (admin's terms table)
+            // Based on the course's School Year, Semester, and Term
+            // Example: For Semester 1 Term 1, get dates from terms table where semester_id matches and term_number = 1
+            $termStartDate = null;
+            $termEndDate = null;
+            if (!empty($course['school_year_id']) && !empty($course['semester']) && !empty($course['term'])) {
+                $semesterModel = new SemesterModel();
+                // Find the semester record for this school year and semester number
+                $semester = $semesterModel
+                    ->where('school_year_id', $course['school_year_id'])
+                    ->where('semester_number', $course['semester'])
+                    ->first();
+                
+                if ($semester) {
+                    // Find the term record for this semester and term number
+                    // This gets the start_date and end_date from the admin's Academic Structure Management
+                    $term = $termModel
+                        ->where('semester_id', $semester['id'])
+                        ->where('term_number', $course['term'])
+                        ->first();
+                    
+                    if ($term) {
+                        // Get the dates from the terms table (set by admin in Academic Structure Management)
+                        $termStartDate = $term['start_date'] ?? null;  // e.g., 2025-12-08
+                        $termEndDate = $term['end_date'] ?? null;      // e.g., 2026-02-01
+                    }
+                }
+            }
 
             // Get pending enrollment requests
             $pendingBuilder = $enrollmentModel->select('enrollments.*, users.name as student_name, users.email as student_email')
@@ -170,6 +365,8 @@ class Instructor extends BaseController
                 'enrollments' => $enrollments,
                 'pending_enrollments' => $pendingEnrollments,
                 'students' => $students,
+                'term_start_date' => $termStartDate,
+                'term_end_date' => $termEndDate,
             ];
 
             return view('instructor/view_course', $data);
@@ -332,9 +529,9 @@ class Instructor extends BaseController
 
         try {
             if ($enrollmentModel->delete($enrollmentId)) {
-                session()->setFlashdata('success', 'Student unenrolled successfully!');
+                session()->setFlashdata('success', 'Student enrollment marked as deleted successfully!');
             } else {
-                session()->setFlashdata('error', 'Failed to unenroll student.');
+                session()->setFlashdata('error', 'Failed to mark enrollment as deleted.');
             }
         } catch (\Exception $e) {
             log_message('error', 'Error unenrolling student: ' . $e->getMessage());

@@ -63,6 +63,40 @@ class AcademicController extends BaseController
         try {
             $data['school_years'] = $this->schoolYearModel->orderBy('school_year', 'DESC')->findAll();
 
+            // Check if there's an active academic period
+            $data['has_active_academic_period'] = false;
+            $data['active_academic_period_info'] = null;
+            
+            // Check for active school year
+            $activeSchoolYear = $this->schoolYearModel->getActiveSchoolYear();
+            $data['active_school_year'] = $activeSchoolYear ? $activeSchoolYear['school_year'] : null;
+            
+            if ($activeSchoolYear) {
+                $data['has_active_academic_period'] = true;
+                $data['active_academic_period_info'] = [
+                    'type' => 'active_school_year',
+                    'school_year' => $activeSchoolYear['school_year'],
+                    'message' => 'There is an active school year (' . $activeSchoolYear['school_year'] . '). Please deactivate it first before creating a new academic structure.'
+                ];
+            } else {
+                // Check for active term (current academic period based on dates)
+                $activeTerm = $this->termModel->getActiveTerm();
+                if ($activeTerm) {
+                    $semester = $this->semesterModel->find($activeTerm['semester_id']);
+                    if ($semester) {
+                        $activeTermSchoolYear = $this->schoolYearModel->find($semester['school_year_id']);
+                        if ($activeTermSchoolYear) {
+                            $data['has_active_academic_period'] = true;
+                            $data['active_academic_period_info'] = [
+                                'type' => 'active_term',
+                                'school_year' => $activeTermSchoolYear['school_year'],
+                                'message' => 'There is currently an active academic period (School Year: ' . $activeTermSchoolYear['school_year'] . '). Please wait until the current term ends before creating a new academic structure.'
+                            ];
+                        }
+                    }
+                }
+            }
+
             // Get full details for each school year
             if (!empty($data['school_years'])) {
                 foreach ($data['school_years'] as &$sy) {
@@ -84,10 +118,26 @@ class AcademicController extends BaseController
                     }
                 }
             }
+            
+            // Check if current year's school year exists
+            $currentYear = (int) date('Y');
+            $currentYearSchoolYear = $currentYear . '-' . ($currentYear + 1);
+            $currentYearExists = false;
+            foreach ($data['school_years'] as $sy) {
+                if ($sy['school_year'] === $currentYearSchoolYear) {
+                    $currentYearExists = true;
+                    break;
+                }
+            }
+            $data['current_year_exists'] = $currentYearExists;
+            $data['current_year_school_year'] = $currentYearSchoolYear;
         } catch (\Exception $e) {
             // Error loading data, but tables exist
             log_message('error', 'Error loading academic data: ' . $e->getMessage());
             $data['school_years'] = [];
+            $currentYear = (int) date('Y');
+            $data['current_year_exists'] = false;
+            $data['current_year_school_year'] = $currentYear . '-' . ($currentYear + 1);
         }
 
         return view('academic/index', $data);
@@ -228,16 +278,79 @@ class AcademicController extends BaseController
             }
         }
 
+        // Validate that terms don't overlap - end date must be at least one day before next term's start date
+        // Semester 1: Term 1 end < Term 2 start
+        if (strtotime($sem1_term1_end) >= strtotime($sem1_term2_start)) {
+            session()->setFlashdata('error', 'ERROR: Semester 1 Term 1 end date (' . date('M d, Y', strtotime($sem1_term1_end)) . ') must be at least one day before Semester 1 Term 2 start date (' . date('M d, Y', strtotime($sem1_term2_start)) . '). Dates cannot be the same or overlap.');
+            return redirect()->to('/academic');
+        }
+
+        // Semester 1: Term 2 end < Semester 2 Term 1 start
+        if (strtotime($sem1_term2_end) >= strtotime($sem2_term1_start)) {
+            session()->setFlashdata('error', 'ERROR: Semester 1 Term 2 end date (' . date('M d, Y', strtotime($sem1_term2_end)) . ') must be at least one day before Semester 2 Term 1 start date (' . date('M d, Y', strtotime($sem2_term1_start)) . '). Dates cannot be the same or overlap.');
+            return redirect()->to('/academic');
+        }
+
+        // Semester 2: Term 1 end < Term 2 start
+        if (strtotime($sem2_term1_end) >= strtotime($sem2_term2_start)) {
+            session()->setFlashdata('error', 'ERROR: Semester 2 Term 1 end date (' . date('M d, Y', strtotime($sem2_term1_end)) . ') must be at least one day before Semester 2 Term 2 start date (' . date('M d, Y', strtotime($sem2_term2_start)) . '). Dates cannot be the same or overlap.');
+            return redirect()->to('/academic');
+        }
+
+        // Check if there's an active academic period (active school year)
+        $activeSchoolYear = $this->schoolYearModel->getActiveSchoolYear();
+        if ($activeSchoolYear) {
+            session()->setFlashdata('error', 'ERROR: Cannot create a new Academic Structure. There is already an Active Academic Period (School Year: ' . $activeSchoolYear['school_year'] . '). Please deactivate the current active school year first before creating a new one.');
+            return redirect()->to('/academic');
+        }
+
+        // Also check if there's an active term (current academic period based on dates)
+        $activeTerm = $this->termModel->getActiveTerm();
+        if ($activeTerm) {
+            // Get the school year for this active term
+            $semester = $this->semesterModel->find($activeTerm['semester_id']);
+            if ($semester) {
+                $activeTermSchoolYear = $this->schoolYearModel->find($semester['school_year_id']);
+                if ($activeTermSchoolYear) {
+                    session()->setFlashdata('error', 'ERROR: Cannot create a new Academic Structure. There is currently an Active Academic Period (School Year: ' . $activeTermSchoolYear['school_year'] . '). Please wait until the current term ends before creating a new academic structure.');
+                    return redirect()->to('/academic');
+                }
+            }
+        }
+
+        // Validate that current year's school year exists before creating future years
+        $startYear = (int) explode('-', $schoolYear)[0];
+        $currentYear = (int) date('Y');
+        
+        // If trying to create a future year, check if current year exists
+        if ($startYear > $currentYear) {
+            $currentYearSchoolYear = $currentYear . '-' . ($currentYear + 1);
+            $currentYearExists = $this->schoolYearModel->where('school_year', $currentYearSchoolYear)->first();
+            
+            if (!$currentYearExists) {
+                session()->setFlashdata('error', 'ERROR: Cannot create School Year ' . $schoolYear . '. You must first create the current year\'s school year (' . $currentYearSchoolYear . ') before creating future school years.');
+                return redirect()->to('/academic');
+            }
+        }
+
         // Start transaction
         $db = \Config\Database::connect();
         $db->transStart();
 
         try {
+            // Extract start year from school year (e.g., "2025-2026" -> 2025)
+            $startYear = (int) explode('-', $schoolYear)[0];
+            $currentYear = (int) date('Y');
+            
+            // Set as active only if start year matches current year
+            $isActive = ($startYear === $currentYear) ? 1 : 0;
+            
+            log_message('info', 'Creating school year: ' . $schoolYear . ' | Start Year: ' . $startYear . ' | Current Year: ' . $currentYear . ' | Will be Active: ' . ($isActive ? 'YES' : 'NO'));
+            
             // Create school year
-            log_message('info', 'Creating school year: ' . $schoolYear);
             $schoolYearId = $this->schoolYearModel->insert([
                 'school_year' => $schoolYear,
-                'is_active' => 0,
+                'is_active' => $isActive,
             ]);
 
             if (!$schoolYearId) {
@@ -306,9 +419,18 @@ class AcademicController extends BaseController
                 throw new \Exception('Failed to create Semester 2 Term 2. Errors: ' . json_encode($this->termModel->errors()));
             }
 
-            // Set the newly created school year as active
-            if (!$this->schoolYearModel->setActive($schoolYearId)) {
-                throw new \Exception('Failed to set school year as active.');
+            // Set the newly created school year as active only if start year matches current year
+            if ($isActive) {
+                // Deactivate all other school years first
+                $this->schoolYearModel->where('id !=', $schoolYearId)->set('is_active', 0)->update();
+                
+                // Then activate this one
+                if (!$this->schoolYearModel->update($schoolYearId, ['is_active' => 1])) {
+                    throw new \Exception('Failed to set school year as active.');
+                }
+                log_message('info', 'School year set as active because start year (' . $startYear . ') matches current year (' . $currentYear . ')');
+            } else {
+                log_message('info', 'School year NOT set as active because start year (' . $startYear . ') does not match current year (' . $currentYear . ')');
             }
 
             $db->transComplete();
@@ -320,7 +442,11 @@ class AcademicController extends BaseController
                 throw new \Exception('Transaction failed. Please check the logs for details.');
             }
 
-            $successMsg = "School Year {$schoolYear} created successfully with Semester 1 (Term 1 & 2) and Semester 2 (Term 1 & 2). It has been set as the Active Academic Period.";
+            if ($isActive) {
+                $successMsg = "School Year {$schoolYear} created successfully with Semester 1 (Term 1 & 2) and Semester 2 (Term 1 & 2). It has been automatically set as the Active Academic Period because the start year matches the current year.";
+            } else {
+                $successMsg = "School Year {$schoolYear} created successfully with Semester 1 (Term 1 & 2) and Semester 2 (Term 1 & 2). It will become active when the year reaches {$startYear}.";
+            }
             session()->setFlashdata('success', $successMsg);
             log_message('info', "School Year {$schoolYear} created successfully with ID: {$schoolYearId}");
             log_message('info', 'Success message set in flashdata');
@@ -364,6 +490,62 @@ class AcademicController extends BaseController
         if (!$this->termModel->validateDates($startDate, $endDate)) {
             session()->setFlashdata('error', 'Term start date must be earlier than end date.');
             return redirect()->to('/academic');
+        }
+
+        // Get the term to find its semester and term number
+        $term = $this->termModel->find($termId);
+        if (!$term) {
+            session()->setFlashdata('error', 'Term not found.');
+            return redirect()->to('/academic');
+        }
+
+        // Get semester to find other terms in the same semester and school year
+        $semester = $this->semesterModel->find($term['semester_id']);
+        if (!$semester) {
+            session()->setFlashdata('error', 'Semester not found.');
+            return redirect()->to('/academic');
+        }
+
+        // Get all terms in the same semester
+        $allTermsInSemester = $this->termModel->where('semester_id', $semester['id'])->findAll();
+        
+        // Get all semesters in the same school year
+        $allSemesters = $this->semesterModel->where('school_year_id', $semester['school_year_id'])->findAll();
+        $allTermIds = [];
+        foreach ($allSemesters as $sem) {
+            $terms = $this->termModel->where('semester_id', $sem['id'])->findAll();
+            foreach ($terms as $t) {
+                if ($t['id'] != $termId) { // Exclude the term being updated
+                    $allTermIds[] = $t;
+                }
+            }
+        }
+
+        // Check for overlaps with other terms
+        foreach ($allTermIds as $otherTerm) {
+            // Check if this term's end date overlaps with next term's start date
+            if ($term['term_number'] == 1 && $otherTerm['term_number'] == 2 && $otherTerm['semester_id'] == $term['semester_id']) {
+                // Same semester, Term 1 -> Term 2
+                if (strtotime($endDate) >= strtotime($otherTerm['start_date'])) {
+                    session()->setFlashdata('error', 'ERROR: Term end date (' . date('M d, Y', strtotime($endDate)) . ') must be at least one day before the next term\'s start date (' . date('M d, Y', strtotime($otherTerm['start_date'])) . '). Dates cannot be the same or overlap.');
+                    return redirect()->to('/academic');
+                }
+            } elseif ($term['term_number'] == 2 && $otherTerm['term_number'] == 1 && $otherTerm['semester_id'] != $term['semester_id']) {
+                // Different semester, Term 2 of Sem 1 -> Term 1 of Sem 2
+                $otherSemester = $this->semesterModel->find($otherTerm['semester_id']);
+                if ($otherSemester && $otherSemester['semester_number'] == 2 && $semester['semester_number'] == 1) {
+                    if (strtotime($endDate) >= strtotime($otherTerm['start_date'])) {
+                        session()->setFlashdata('error', 'ERROR: Term end date (' . date('M d, Y', strtotime($endDate)) . ') must be at least one day before the next term\'s start date (' . date('M d, Y', strtotime($otherTerm['start_date'])) . '). Dates cannot be the same or overlap.');
+                        return redirect()->to('/academic');
+                    }
+                }
+            } elseif ($term['term_number'] == 2 && $otherTerm['term_number'] == 1 && $otherTerm['semester_id'] == $term['semester_id']) {
+                // Same semester, Term 2 -> Term 1 (shouldn't happen, but check anyway)
+                if (strtotime($otherTerm['end_date']) >= strtotime($startDate)) {
+                    session()->setFlashdata('error', 'ERROR: Term start date (' . date('M d, Y', strtotime($startDate)) . ') must be at least one day after the previous term\'s end date (' . date('M d, Y', strtotime($otherTerm['end_date'])) . '). Dates cannot be the same or overlap.');
+                    return redirect()->to('/academic');
+                }
+            }
         }
 
         if ($this->termModel->update($termId, [

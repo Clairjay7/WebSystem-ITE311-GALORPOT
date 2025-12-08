@@ -16,8 +16,11 @@ class EnrollmentModel extends Model
         'semester',
         'term',
         'status',
-        'rejection_reason'
+        'rejection_reason',
+        'deleted_at'
     ];
+    protected $useSoftDeletes = true;
+    protected $deletedField = 'deleted_at';
 
     public function getEnrollmentCount()
     {

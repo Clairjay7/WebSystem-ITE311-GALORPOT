@@ -128,8 +128,9 @@ class Student extends BaseController
                 $pendingEnrollments = [];
                 if ($hasStatusColumn) {
                     $allPending = $enrollmentModel
-                        ->select('enrollments.*, courses.title as course_title, courses.description')
+                        ->select('enrollments.*, courses.title as course_title, courses.description, courses.control_number, courses.units, users.name as instructor_name')
                         ->join('courses', 'courses.id = enrollments.course_id')
+                        ->join('users', 'users.id = courses.instructor_id', 'left')
                         ->where('enrollments.user_id', $userId)
                         ->where('enrollments.school_year_id', $currentPeriod['school_year']['id'])
                         ->where('enrollments.semester', $currentPeriod['semester']['semester_number'])
@@ -433,6 +434,118 @@ class Student extends BaseController
     }
 
     /**
+     * View all enrolled courses
+     */
+    public function courses()
+    {
+        if ($redirect = $this->ensureStudent()) {
+            return $redirect;
+        }
+
+        $userId = (int) session()->get('id');
+        $enrollmentModel = new EnrollmentModel();
+        $courseModel = new CourseModel();
+        $termModel = new TermModel();
+        $semesterModel = new SemesterModel();
+        $schoolYearModel = new SchoolYearModel();
+
+        $data = [
+            'courses' => [],
+            'current_period' => null,
+            'active_school_year' => null,
+        ];
+
+        try {
+            // Get current academic period
+            $currentPeriod = $termModel->getCurrentAcademicPeriod();
+            $data['current_period'] = $currentPeriod;
+
+            // Get active school year
+            $activeSchoolYear = $schoolYearModel->getActiveSchoolYear();
+            $data['active_school_year'] = $activeSchoolYear;
+
+            // Check if status column exists
+            $db = \Config\Database::connect();
+            $columns = $db->getFieldNames('enrollments');
+            $hasStatusColumn = in_array('status', $columns);
+
+            // Get all approved enrollments (across all terms)
+            $allEnrollments = [];
+            if ($hasStatusColumn) {
+                $allEnrollments = $enrollmentModel
+                    ->select('enrollments.*, courses.title as course_title, courses.description, courses.control_number, courses.units, courses.school_year_id, courses.semester, courses.term, users.name as instructor_name')
+                    ->join('courses', 'courses.id = enrollments.course_id')
+                    ->join('users', 'users.id = courses.instructor_id', 'left')
+                    ->where('enrollments.user_id', $userId)
+                    ->where('enrollments.status', 'approved')
+                    ->orderBy('enrollments.enrollment_date', 'DESC')
+                    ->findAll();
+            } else {
+                // If no status column, get all enrollments
+                $allEnrollments = $enrollmentModel
+                    ->select('enrollments.*, courses.title as course_title, courses.description, courses.control_number, courses.units, courses.school_year_id, courses.semester, courses.term, users.name as instructor_name')
+                    ->join('courses', 'courses.id = enrollments.course_id')
+                    ->join('users', 'users.id = courses.instructor_id', 'left')
+                    ->where('enrollments.user_id', $userId)
+                    ->orderBy('enrollments.enrollment_date', 'DESC')
+                    ->findAll();
+            }
+
+            // Add term end date and school year info for each enrollment
+            $today = date('Y-m-d');
+            $courses = [];
+            
+            foreach ($allEnrollments as $enrollment) {
+                $course = [
+                    'id' => $enrollment['course_id'],
+                    'title' => $enrollment['course_title'],
+                    'description' => $enrollment['description'],
+                    'control_number' => $enrollment['control_number'],
+                    'units' => $enrollment['units'],
+                    'instructor_name' => $enrollment['instructor_name'],
+                    'enrollment_date' => $enrollment['enrollment_date'],
+                    'school_year_id' => $enrollment['school_year_id'],
+                    'semester' => $enrollment['semester'],
+                    'term' => $enrollment['term'],
+                ];
+
+                // Get school year
+                $sy = $schoolYearModel->find($enrollment['school_year_id']);
+                $course['school_year'] = $sy ? $sy['school_year'] : 'N/A';
+
+                // Get term end date
+                if ($enrollment['school_year_id'] && $enrollment['semester'] && $enrollment['term']) {
+                    $semester = $semesterModel
+                        ->where('school_year_id', $enrollment['school_year_id'])
+                        ->where('semester_number', $enrollment['semester'])
+                        ->first();
+                    
+                    if ($semester) {
+                        $term = $termModel
+                            ->where('semester_id', $semester['id'])
+                            ->where('term_number', $enrollment['term'])
+                            ->first();
+                        
+                        if ($term) {
+                            $course['term_end_date'] = $term['end_date'];
+                            $course['is_expired'] = ($term['end_date'] < $today);
+                        }
+                    }
+                }
+
+                $courses[] = $course;
+            }
+
+            $data['courses'] = $courses;
+        } catch (\Exception $e) {
+            log_message('error', 'Error loading courses: ' . $e->getMessage());
+            $data['error'] = 'Error loading courses. Please try again later.';
+        }
+
+        return view('student/courses', $data);
+    }
+
+    /**
      * View a specific course
      */
     public function viewCourse($courseId = null)
@@ -480,24 +593,28 @@ class Student extends BaseController
             $schoolYearModel = new SchoolYearModel();
             $schoolYear = $schoolYearModel->find($course['school_year_id']);
 
-            // Get term end date
+            // Get term start and end dates from Academic Structure
             $termModel = new TermModel();
             $semesterModel = new SemesterModel();
+            $termStartDate = null;
             $termEndDate = null;
             
-            $semester = $semesterModel
-                ->where('school_year_id', $course['school_year_id'])
-                ->where('semester_number', $course['semester'])
-                ->first();
-            
-            if ($semester) {
-                $term = $termModel
-                    ->where('semester_id', $semester['id'])
-                    ->where('term_number', $course['term'])
+            if (!empty($course['school_year_id']) && !empty($course['semester']) && !empty($course['term'])) {
+                $semester = $semesterModel
+                    ->where('school_year_id', $course['school_year_id'])
+                    ->where('semester_number', $course['semester'])
                     ->first();
                 
-                if ($term) {
-                    $termEndDate = $term['end_date'];
+                if ($semester) {
+                    $term = $termModel
+                        ->where('semester_id', $semester['id'])
+                        ->where('term_number', $course['term'])
+                        ->first();
+                    
+                    if ($term) {
+                        $termStartDate = $term['start_date'] ?? null;
+                        $termEndDate = $term['end_date'] ?? null;
+                    }
                 }
             }
 
@@ -506,6 +623,7 @@ class Student extends BaseController
                 'enrollment' => $enrollment,
                 'instructor' => $instructor,
                 'school_year' => $schoolYear,
+                'term_start_date' => $termStartDate,
                 'term_end_date' => $termEndDate,
             ];
 

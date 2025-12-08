@@ -8,10 +8,12 @@ class SchoolYearModel extends Model
 {
     protected $table = 'school_years';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['school_year', 'is_active', 'created_at', 'updated_at'];
+    protected $allowedFields = ['school_year', 'is_active', 'created_at', 'updated_at', 'deleted_at'];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
+    protected $useSoftDeletes = true;
+    protected $deletedField = 'deleted_at';
 
     protected $validationRules = [
         'school_year' => 'required|regex_match[/^\d{4}-\d{4}$/]|is_unique[school_years.school_year,id,{id}]',

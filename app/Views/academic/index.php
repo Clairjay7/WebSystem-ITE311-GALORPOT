@@ -46,6 +46,18 @@
             <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Create New School Year</h5>
         </div>
         <div class="card-body">
+            <?php if (isset($has_active_academic_period) && $has_active_academic_period && isset($active_academic_period_info)): ?>
+                <div class="alert alert-danger mb-3">
+                    <strong><i class="fas fa-exclamation-triangle"></i> Cannot Create Academic Structure:</strong> 
+                    <p class="mb-0"><?= esc($active_academic_period_info['message']) ?></p>
+                </div>
+            <?php endif; ?>
+            <?php if (isset($current_year_exists) && !$current_year_exists): ?>
+                <div class="alert alert-danger mb-3">
+                    <strong><i class="fas fa-exclamation-triangle"></i> Cannot Create Future School Year:</strong> 
+                    You must first create the current year's school year (<strong><?= esc($current_year_school_year ?? date('Y') . '-' . (date('Y') + 1)) ?></strong>) before creating future school years.
+                </div>
+            <?php endif; ?>
             <div class="alert alert-warning mb-3">
                 <strong><i class="fas fa-exclamation-triangle"></i> Required:</strong> You must provide dates for all terms:
                 <ul class="mb-0 mt-2">
@@ -53,7 +65,7 @@
                     <li><strong>Semester 2</strong> - Term 1 and Term 2 dates</li>
                 </ul>
             </div>
-            <form method="post" action="<?= site_url('/academic/school-year/create') ?>" id="createSchoolYearForm">
+            <form method="post" action="<?= site_url('/academic/school-year/create') ?>" id="createSchoolYearForm" <?= (isset($has_active_academic_period) && $has_active_academic_period) ? 'onsubmit="event.preventDefault(); alert(\'Cannot create academic structure. There is an active academic period.\'); return false;"' : '' ?>>
                 <?= csrf_field() ?>
                 <input type="hidden" name="form_submitted" value="1">
                 
@@ -61,10 +73,63 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label for="school_year" class="form-label">School Year <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="school_year" name="school_year" 
-                               placeholder="2024-2025" pattern="\d{4}-\d{4}" 
-                               value="<?= function_exists('set_value') ? set_value('school_year') : (old('school_year') ?? '') ?>" required>
-                        <div class="form-text">Format: YYYY-YYYY (e.g., 2024-2025)</div>
+                        <select class="form-select" id="school_year" name="school_year" required>
+                            <option value="">Select School Year</option>
+                            <?php
+                            // Generate school year options (current year to 10 years ahead)
+                            $currentYear = (int) date('Y');
+                            $selectedValue = function_exists('set_value') ? set_value('school_year') : (old('school_year') ?? '');
+                            $currentYearSchoolYear = $currentYear . '-' . ($currentYear + 1);
+                            $currentYearExists = isset($current_year_exists) ? $current_year_exists : false;
+                            
+                            // Get active school year
+                            $activeSchoolYear = isset($active_school_year) ? $active_school_year : null;
+                            
+                            for ($i = 0; $i <= 10; $i++) {
+                                $startYear = $currentYear + $i;
+                                $endYear = $startYear + 1;
+                                $schoolYearValue = $startYear . '-' . $endYear;
+                                $isSelected = ($selectedValue === $schoolYearValue) ? 'selected' : '';
+                                
+                                // Disable all options EXCEPT the active school year
+                                $isDisabled = false;
+                                if ($activeSchoolYear) {
+                                    // If there's an active school year, disable all except the active one
+                                    if ($schoolYearValue !== $activeSchoolYear) {
+                                        $isDisabled = true;
+                                    }
+                                } else {
+                                    // If no active school year, disable future years if current year doesn't exist
+                                    if ($startYear > $currentYear && !$currentYearExists) {
+                                        $isDisabled = true;
+                                    }
+                                }
+                                
+                                $disabledAttr = $isDisabled ? 'disabled' : '';
+                                $disabledText = '';
+                                if ($isDisabled) {
+                                    if ($activeSchoolYear && $schoolYearValue !== $activeSchoolYear) {
+                                        $disabledText = ' (Active: ' . $activeSchoolYear . ')';
+                                    } elseif ($startYear > $currentYear && !$currentYearExists) {
+                                        $disabledText = ' (Create ' . $currentYearSchoolYear . ' first)';
+                                    }
+                                }
+                                
+                                // Add visual indicator for active school year
+                                $activeBadge = ($schoolYearValue === $activeSchoolYear) ? ' <span class="badge bg-success">Active</span>' : '';
+                                
+                                echo '<option value="' . esc($schoolYearValue) . '" ' . $isSelected . ' ' . $disabledAttr . '>' . esc($schoolYearValue) . $activeBadge . $disabledText . '</option>';
+                            }
+                            ?>
+                        </select>
+                        <?php if (isset($current_year_exists) && !$current_year_exists): ?>
+                            <div class="form-text text-warning">
+                                <i class="fas fa-info-circle"></i> <strong>Note:</strong> You can create <?= esc($current_year_school_year ?? date('Y') . '-' . (date('Y') + 1)) ?> now. Future school years will be available after creating the current year.
+                            </div>
+                        <?php else: ?>
+                            <div class="form-text">Select a school year from the dropdown</div>
+                        <?php endif; ?>
+                        <div class="form-text">Select a school year from the dropdown</div>
                     </div>
                 </div>
 
@@ -86,13 +151,13 @@
                                             <label for="sem1_term1_start" class="form-label small">Start Date <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control" 
                                                    name="sem1_term1_start" id="sem1_term1_start" 
-                                                   value="<?= function_exists('set_value') ? set_value('sem1_term1_start') : (old('sem1_term1_start') ?? '') ?>" required>
+                                                   value="<?= function_exists('set_value') ? set_value('sem1_term1_start') : (old('sem1_term1_start') ?? '') ?>" required <?= (isset($has_active_academic_period) && $has_active_academic_period) ? 'disabled' : '' ?>>
                                         </div>
                                         <div class="mb-2">
                                             <label for="sem1_term1_end" class="form-label small">End Date <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control" 
                                                    name="sem1_term1_end" id="sem1_term1_end" 
-                                                   value="<?= function_exists('set_value') ? set_value('sem1_term1_end') : (old('sem1_term1_end') ?? '') ?>" required>
+                                                   value="<?= function_exists('set_value') ? set_value('sem1_term1_end') : (old('sem1_term1_end') ?? '') ?>" required <?= (isset($has_active_academic_period) && $has_active_academic_period) ? 'disabled' : '' ?>>
                                         </div>
                                     </div>
                                 </div>
@@ -108,13 +173,13 @@
                                             <label for="sem1_term2_start" class="form-label small">Start Date <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control" 
                                                    name="sem1_term2_start" id="sem1_term2_start" 
-                                                   value="<?= function_exists('set_value') ? set_value('sem1_term2_start') : (old('sem1_term2_start') ?? '') ?>" required>
+                                                   value="<?= function_exists('set_value') ? set_value('sem1_term2_start') : (old('sem1_term2_start') ?? '') ?>" required <?= (isset($has_active_academic_period) && $has_active_academic_period) ? 'disabled' : '' ?>>
                                         </div>
                                         <div class="mb-2">
                                             <label for="sem1_term2_end" class="form-label small">End Date <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control" 
                                                    name="sem1_term2_end" id="sem1_term2_end" 
-                                                   value="<?= function_exists('set_value') ? set_value('sem1_term2_end') : (old('sem1_term2_end') ?? '') ?>" required>
+                                                   value="<?= function_exists('set_value') ? set_value('sem1_term2_end') : (old('sem1_term2_end') ?? '') ?>" required <?= (isset($has_active_academic_period) && $has_active_academic_period) ? 'disabled' : '' ?>>
                                         </div>
                                     </div>
                                 </div>
@@ -141,13 +206,13 @@
                                             <label for="sem2_term1_start" class="form-label small">Start Date <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control" 
                                                    name="sem2_term1_start" id="sem2_term1_start" 
-                                                   value="<?= function_exists('set_value') ? set_value('sem2_term1_start') : (old('sem2_term1_start') ?? '') ?>" required>
+                                                   value="<?= function_exists('set_value') ? set_value('sem2_term1_start') : (old('sem2_term1_start') ?? '') ?>" required <?= (isset($has_active_academic_period) && $has_active_academic_period) ? 'disabled' : '' ?>>
                                         </div>
                                         <div class="mb-2">
                                             <label for="sem2_term1_end" class="form-label small">End Date <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control" 
                                                    name="sem2_term1_end" id="sem2_term1_end" 
-                                                   value="<?= function_exists('set_value') ? set_value('sem2_term1_end') : (old('sem2_term1_end') ?? '') ?>" required>
+                                                   value="<?= function_exists('set_value') ? set_value('sem2_term1_end') : (old('sem2_term1_end') ?? '') ?>" required <?= (isset($has_active_academic_period) && $has_active_academic_period) ? 'disabled' : '' ?>>
                                         </div>
                                     </div>
                                 </div>
@@ -163,13 +228,13 @@
                                             <label for="sem2_term2_start" class="form-label small">Start Date <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control" 
                                                    name="sem2_term2_start" id="sem2_term2_start" 
-                                                   value="<?= function_exists('set_value') ? set_value('sem2_term2_start') : (old('sem2_term2_start') ?? '') ?>" required>
+                                                   value="<?= function_exists('set_value') ? set_value('sem2_term2_start') : (old('sem2_term2_start') ?? '') ?>" required <?= (isset($has_active_academic_period) && $has_active_academic_period) ? 'disabled' : '' ?>>
                                         </div>
                                         <div class="mb-2">
                                             <label for="sem2_term2_end" class="form-label small">End Date <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control" 
                                                    name="sem2_term2_end" id="sem2_term2_end" 
-                                                   value="<?= function_exists('set_value') ? set_value('sem2_term2_end') : (old('sem2_term2_end') ?? '') ?>" required>
+                                                   value="<?= function_exists('set_value') ? set_value('sem2_term2_end') : (old('sem2_term2_end') ?? '') ?>" required <?= (isset($has_active_academic_period) && $has_active_academic_period) ? 'disabled' : '' ?>>
                                         </div>
                                     </div>
                                 </div>
@@ -179,7 +244,7 @@
                 </div>
 
                 <div class="text-end">
-                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" <?= (isset($has_active_academic_period) && $has_active_academic_period) ? 'disabled' : '' ?>>
                         <i class="fas fa-save"></i> Create School Year with All Terms
                     </button>
                 </div>
@@ -195,6 +260,25 @@
                             console.log('Form action:', form.action);
                             console.log('Form will submit as POST');
                             
+                            // Check if current year exists and user is trying to create future year
+                            const schoolYearSelect = document.getElementById('school_year');
+                            const selectedYear = schoolYearSelect ? schoolYearSelect.value : '';
+                            const currentYearExists = <?= (isset($current_year_exists) && $current_year_exists) ? 'true' : 'false' ?>;
+                            const currentYearSchoolYear = '<?= esc($current_year_school_year ?? date('Y') . '-' . (date('Y') + 1)) ?>';
+                            
+                            if (selectedYear && !currentYearExists) {
+                                const selectedStartYear = parseInt(selectedYear.split('-')[0]);
+                                const currentYear = parseInt('<?= date('Y') ?>');
+                                
+                                if (selectedStartYear > currentYear) {
+                                    e.preventDefault();
+                                    alert('ERROR: Cannot create School Year ' + selectedYear + '. You must first create the current year\'s school year (' + currentYearSchoolYear + ') before creating future school years.');
+                                    btn.disabled = false;
+                                    btn.innerHTML = '<i class="fas fa-save"></i> Create School Year with All Terms';
+                                    return false;
+                                }
+                            }
+                            
                             // Only disable button, don't prevent form submission
                             if (!btn.disabled) {
                                 btn.disabled = true;
@@ -206,6 +290,107 @@
                         });
                     } else {
                         console.error('Form or button not found!');
+                    }
+                    
+                    // Auto-calculate dates when Term 1 start date is set
+                    const term1StartInput = document.getElementById('sem1_term1_start');
+                    const schoolYearSelect = document.getElementById('school_year');
+                    
+                    if (term1StartInput) {
+                        term1StartInput.addEventListener('change', function() {
+                            calculateAllTermDates();
+                        });
+                    }
+                    
+                    // When school year is selected, the calculation pattern applies to all years
+                    if (schoolYearSelect) {
+                        schoolYearSelect.addEventListener('change', function() {
+                            // Clear all date fields when school year changes
+                            document.getElementById('sem1_term1_start').value = '';
+                            document.getElementById('sem1_term1_end').value = '';
+                            document.getElementById('sem1_term2_start').value = '';
+                            document.getElementById('sem1_term2_end').value = '';
+                            document.getElementById('sem2_term1_start').value = '';
+                            document.getElementById('sem2_term1_end').value = '';
+                            document.getElementById('sem2_term2_start').value = '';
+                            document.getElementById('sem2_term2_end').value = '';
+                            
+                            // Hide info message
+                            const infoDiv = document.getElementById('autoDateInfo');
+                            if (infoDiv) {
+                                infoDiv.style.display = 'none';
+                            }
+                        });
+                    }
+                    
+                    function calculateAllTermDates() {
+                        const term1Start = document.getElementById('sem1_term1_start').value;
+                        
+                        if (!term1Start) {
+                            return; // Don't calculate if Term 1 start is empty
+                        }
+                        
+                        const startDate = new Date(term1Start);
+                        if (isNaN(startDate.getTime())) {
+                            return; // Invalid date
+                        }
+                        
+                        // Format dates as YYYY-MM-DD
+                        function formatDate(date) {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                        }
+                        
+                        // Semester 1 - Term 1: ~8 weeks (56 days)
+                        const term1End = new Date(startDate);
+                        term1End.setDate(term1End.getDate() + 55); // 8 weeks = 56 days, but we count from start so 55 days added
+                        
+                        // Break between Term 1 and Term 2: 4 days (Feb 2-5)
+                        const term2Start = new Date(term1End);
+                        term2Start.setDate(term2Start.getDate() + 5); // 1 day after end + 4 days break
+                        
+                        // Semester 1 - Term 2: ~8 weeks (56 days)
+                        const term2End = new Date(term2Start);
+                        term2End.setDate(term2End.getDate() + 55); // 8 weeks = 56 days
+                        
+                        // Semester Break (Vacation): 3 weeks (21 days)
+                        const sem2Term1Start = new Date(term2End);
+                        sem2Term1Start.setDate(sem2Term1Start.getDate() + 22); // 1 day after end + 21 days vacation
+                        
+                        // Semester 2 - Term 1: ~8 weeks (56 days)
+                        const sem2Term1End = new Date(sem2Term1Start);
+                        sem2Term1End.setDate(sem2Term1End.getDate() + 55); // 8 weeks = 56 days
+                        
+                        // Break between Semester 2 Term 1 and Term 2: 4 days (Jun 17-20)
+                        const sem2Term2Start = new Date(sem2Term1End);
+                        sem2Term2Start.setDate(sem2Term2Start.getDate() + 5); // 1 day after end + 4 days break
+                        
+                        // Semester 2 - Term 2: ~8 weeks (56 days)
+                        const sem2Term2End = new Date(sem2Term2Start);
+                        sem2Term2End.setDate(sem2Term2End.getDate() + 55); // 8 weeks = 56 days
+                        
+                        // Auto-fill all date fields
+                        document.getElementById('sem1_term1_end').value = formatDate(term1End);
+                        document.getElementById('sem1_term2_start').value = formatDate(term2Start);
+                        document.getElementById('sem1_term2_end').value = formatDate(term2End);
+                        document.getElementById('sem2_term1_start').value = formatDate(sem2Term1Start);
+                        document.getElementById('sem2_term1_end').value = formatDate(sem2Term1End);
+                        document.getElementById('sem2_term2_start').value = formatDate(sem2Term2Start);
+                        document.getElementById('sem2_term2_end').value = formatDate(sem2Term2End);
+                        
+                        // Show info message
+                        const infoDiv = document.getElementById('autoDateInfo');
+                        if (!infoDiv) {
+                            const newInfoDiv = document.createElement('div');
+                            newInfoDiv.id = 'autoDateInfo';
+                            newInfoDiv.className = 'alert alert-info mt-3';
+                            newInfoDiv.innerHTML = '<i class="fas fa-info-circle"></i> <strong>Auto-calculated:</strong> Dates have been automatically calculated based on Term 1 start date. <strong>Pattern:</strong> Each term is ~8 weeks (56 days), with 4 days break between terms in the same semester, 3 weeks (21 days) semester break between Semester 1 and Semester 2. This pattern applies to all school years regardless of the start month.';
+                            term1StartInput.closest('.card-body').appendChild(newInfoDiv);
+                        } else {
+                            infoDiv.style.display = 'block';
+                        }
                     }
                 });
                 </script>

@@ -38,6 +38,12 @@
                         <dt class="col-sm-3">Title:</dt>
                         <dd class="col-sm-9"><?= esc($course['title']) ?></dd>
 
+                        <dt class="col-sm-3">Control Number (CN):</dt>
+                        <dd class="col-sm-9"><strong><?= esc($course['control_number'] ?? 'N/A') ?></strong></dd>
+
+                        <dt class="col-sm-3">Units:</dt>
+                        <dd class="col-sm-9"><span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span></dd>
+
                         <dt class="col-sm-3">Description:</dt>
                         <dd class="col-sm-9"><?= esc($course['description'] ?? 'No description provided') ?></dd>
 
@@ -55,6 +61,22 @@
 
                         <dt class="col-sm-3">Term:</dt>
                         <dd class="col-sm-9">Term <?= $course['term'] ?? 'N/A' ?></dd>
+
+                        <?php if (isset($term_start_date) && $term_start_date): ?>
+                            <dt class="col-sm-3">Sem <?= $course['semester'] ?? 'N/A' ?> - Term <?= $course['term'] ?? 'N/A' ?> Start:</dt>
+                            <dd class="col-sm-9">
+                                <i class="fas fa-calendar-check text-success"></i> 
+                                <strong><?= date('F d, Y', strtotime($term_start_date)) ?></strong>
+                            </dd>
+                        <?php endif; ?>
+
+                        <?php if (isset($term_end_date) && $term_end_date): ?>
+                            <dt class="col-sm-3">Sem <?= $course['semester'] ?? 'N/A' ?> - Term <?= $course['term'] ?? 'N/A' ?> End:</dt>
+                            <dd class="col-sm-9">
+                                <i class="fas fa-calendar-times text-warning"></i> 
+                                <strong><?= date('F d, Y', strtotime($term_end_date)) ?></strong>
+                            </dd>
+                        <?php endif; ?>
 
                         <dt class="col-sm-3">Created:</dt>
                         <dd class="col-sm-9"><?= date('F d, Y', strtotime($course['created_at'])) ?></dd>

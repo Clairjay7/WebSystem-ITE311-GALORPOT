@@ -1,13 +1,13 @@
 <?= $this->extend('template') ?>
 <?= $this->section('styles') ?><?= $this->endSection() ?>
 
-<?= $this->section('body_class') ?>page-instructor-courses<?= $this->endSection() ?>
+<?= $this->section('body_class') ?>page-completed-courses<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-book"></i> My Courses</h2>
+        <h2><i class="fas fa-check-circle"></i> Completed Courses</h2>
         <a href="<?= site_url('/dashboard') ?>" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
@@ -46,15 +46,18 @@
     <?php if (empty($courses)): ?>
         <div class="card">
             <div class="card-body text-center py-5">
-                <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No Courses Assigned</h5>
-                <p class="text-muted">You don't have any courses assigned for this academic period.</p>
+                <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Completed Courses</h5>
+                <p class="text-muted">There are no completed courses yet.</p>
             </div>
         </div>
     <?php else: ?>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> These courses have been completed. You can still view them for reference.
+        </div>
         <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-list"></i> My Assigned Courses</h5>
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-list"></i> Completed Courses (<?= count($courses) ?>)</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -64,34 +67,44 @@
                                 <th>CN</th>
                                 <th>Course Title</th>
                                 <th>Units</th>
-                                <th>Description</th>
+                                <th>Instructor</th>
                                 <th>School Year</th>
                                 <th>Semester</th>
                                 <th>Term</th>
-                                <th>Created</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($courses as $course): ?>
-                                <tr>
+                                <tr class="table-secondary">
                                     <td><strong><?= esc($course['control_number'] ?? 'N/A') ?></strong></td>
                                     <td><strong><?= esc($course['title']) ?></strong></td>
                                     <td><span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span></td>
-                                    <td><?= esc($course['description'] ?? 'N/A') ?></td>
-                                    <td>
-                                        <?php
-                                        $schoolYearModel = new \App\Models\SchoolYearModel();
-                                        $sy = $schoolYearModel->find($course['school_year_id']);
-                                        echo $sy ? esc($sy['school_year']) : 'N/A';
-                                        ?>
-                                    </td>
+                                    <td><?= esc($course['instructor_name'] ?? 'N/A') ?></td>
+                                    <td><strong><?= esc($course['school_year'] ?? 'N/A') ?></strong></td>
                                     <td>Semester <?= $course['semester'] ?? 'N/A' ?></td>
                                     <td>Term <?= $course['term'] ?? 'N/A' ?></td>
-                                    <td><?= date('M d, Y', strtotime($course['created_at'])) ?></td>
                                     <td>
-                                        <a href="<?= site_url('/instructor/course/' . $course['id']) ?>" class="btn btn-sm btn-primary">
-                                            <i class="fas fa-cog"></i> Manage Course
+                                        <?php if (isset($course['term_start_date'])): ?>
+                                            <i class="fas fa-calendar-check text-success"></i> <?= date('M d, Y', strtotime($course['term_start_date'])) ?>
+                                        <?php else: ?>
+                                            <span class="text-muted">N/A</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if (isset($course['term_end_date'])): ?>
+                                            <i class="fas fa-calendar-times text-warning"></i> <strong><?= date('M d, Y', strtotime($course['term_end_date'])) ?></strong>
+                                        <?php else: ?>
+                                            <span class="text-muted">N/A</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><span class="badge bg-secondary">COMPLETED</span></td>
+                                    <td>
+                                        <a href="<?= site_url('/admin/courses') ?>" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View Course
                                         </a>
                                     </td>
                                 </tr>

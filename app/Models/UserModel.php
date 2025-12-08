@@ -9,7 +9,7 @@ class UserModel extends Model
     protected $table = 'users';
     protected $primaryKey = 'id';
     protected $allowedFields = [
-        'name', 'email', 'password', 'role', 'created_at', 'updated_at',
+        'name', 'email', 'password', 'role', 'created_at', 'updated_at', 'deleted_at',
         // new registration fields
         'student_id', 'first_name', 'middle_name', 'last_name',
         'date_of_birth', 'gender', 'contact_number'
@@ -17,6 +17,8 @@ class UserModel extends Model
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
+    protected $useSoftDeletes = true;
+    protected $deletedField = 'deleted_at';
 
     public function getInstructors()
     {

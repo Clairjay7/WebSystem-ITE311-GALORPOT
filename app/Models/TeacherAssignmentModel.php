@@ -15,11 +15,14 @@ class TeacherAssignmentModel extends Model
         'semester', 
         'term',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'deleted_at'
     ];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
+    protected $useSoftDeletes = true;
+    protected $deletedField = 'deleted_at';
 
     /**
      * Get courses assigned to a teacher for a specific academic period
@@ -69,15 +72,21 @@ class TeacherAssignmentModel extends Model
 
     /**
      * Check if teacher is assigned to a course
+     * @param int $excludeId Optional ID to exclude from check (useful when updating)
      */
-    public function isAssigned($teacherId, $courseId, $schoolYearId, $semester, $term)
+    public function isAssigned($teacherId, $courseId, $schoolYearId, $semester, $term, $excludeId = null)
     {
-        return $this->where('teacher_id', $teacherId)
+        $builder = $this->where('teacher_id', $teacherId)
             ->where('course_id', $courseId)
             ->where('school_year_id', $schoolYearId)
             ->where('semester', $semester)
-            ->where('term', $term)
-            ->first() !== null;
+            ->where('term', $term);
+        
+        if ($excludeId !== null) {
+            $builder->where('id !=', $excludeId);
+        }
+        
+        return $builder->first() !== null;
     }
 }
 

@@ -8,10 +8,12 @@ class TermModel extends Model
 {
     protected $table = 'terms';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['semester_id', 'term_number', 'start_date', 'end_date', 'created_at', 'updated_at'];
+    protected $allowedFields = ['semester_id', 'term_number', 'start_date', 'end_date', 'created_at', 'updated_at', 'deleted_at'];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
+    protected $useSoftDeletes = true;
+    protected $deletedField = 'deleted_at';
 
     protected $validationRules = [
         'start_date' => 'required|valid_date',

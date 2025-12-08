@@ -141,7 +141,10 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
+                                <th>CN</th>
                                 <th>Course</th>
+                                <th>Units</th>
+                                <th>Teacher</th>
                                 <th>Request Date</th>
                                 <th>Status</th>
                             </tr>
@@ -149,7 +152,10 @@
                         <tbody>
                             <?php foreach ($pending_enrollments as $pending): ?>
                                 <tr>
+                                    <td><strong><?= esc($pending['control_number'] ?? 'N/A') ?></strong></td>
                                     <td><strong><?= esc($pending['course_title'] ?? 'N/A') ?></strong></td>
+                                    <td><span class="badge bg-info"><?= esc($pending['units'] ?? '0') ?> units</span></td>
+                                    <td><?= esc($pending['instructor_name'] ?? 'N/A') ?></td>
                                     <td><?= date('M d, Y', strtotime($pending['enrollment_date'])) ?></td>
                                     <td><span class="badge bg-warning">Pending Approval</span></td>
                                 </tr>

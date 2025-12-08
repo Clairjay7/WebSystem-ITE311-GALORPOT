@@ -137,6 +137,57 @@
             </div>
         </div>
     </div>
+    
+    <!-- Deleted Enrollments Section -->
+    <?php if (!empty($deleted_enrollments)): ?>
+    <div class="card mt-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="fas fa-trash"></i> Deleted Enrollments</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Student</th>
+                            <th>Course</th>
+                            <th>School Year</th>
+                            <th>Semester</th>
+                            <th>Term</th>
+                            <th>Enrollment Date</th>
+                            <th>Deleted At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($deleted_enrollments as $enrollment): ?>
+                            <tr class="table-secondary">
+                                <td><?= $enrollment['id'] ?></td>
+                                <td><?= esc($enrollment['student_name']) ?></td>
+                                <td><?= esc($enrollment['course_title']) ?></td>
+                                <td><?= esc($enrollment['school_year'] ?? 'N/A') ?></td>
+                                <td>Semester <?= $enrollment['semester'] ?? 'N/A' ?></td>
+                                <td>Term <?= $enrollment['term'] ?? 'N/A' ?></td>
+                                <td><?= $enrollment['enrollment_date'] ? date('M d, Y', strtotime($enrollment['enrollment_date'])) : 'N/A' ?></td>
+                                <td><?= $enrollment['deleted_at'] ? date('M d, Y H:i', strtotime($enrollment['deleted_at'])) : 'N/A' ?></td>
+                                <td>
+                                    <form method="post" action="<?= site_url('/admin/enrollments/restore') ?>" class="d-inline" onsubmit="return confirm('Are you sure you want to restore this enrollment?')">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="id" value="<?= $enrollment['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-undo"></i> Restore
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <?= $this->endSection() ?>
