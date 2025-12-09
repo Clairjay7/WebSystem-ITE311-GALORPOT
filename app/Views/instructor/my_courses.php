@@ -64,6 +64,7 @@
                                 <th>CN</th>
                                 <th>Course Title</th>
                                 <th>Units</th>
+                                <th>Time</th>
                                 <th>Description</th>
                                 <th>School Year</th>
                                 <th>Semester</th>
@@ -78,6 +79,7 @@
                                     <td><strong><?= esc($course['control_number'] ?? 'N/A') ?></strong></td>
                                     <td><strong><?= esc($course['title']) ?></strong></td>
                                     <td><span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span></td>
+                                    <td><?= esc($course['time'] ?? 'N/A') ?></td>
                                     <td><?= esc($course['description'] ?? 'N/A') ?></td>
                                     <td>
                                         <?php

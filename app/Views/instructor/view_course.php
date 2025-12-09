@@ -44,6 +44,9 @@
                         <dt class="col-sm-3">Units:</dt>
                         <dd class="col-sm-9"><span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span></dd>
 
+                        <dt class="col-sm-3">Time:</dt>
+                        <dd class="col-sm-9"><?= esc($course['time'] ?? 'N/A') ?></dd>
+
                         <dt class="col-sm-3">Description:</dt>
                         <dd class="col-sm-9"><?= esc($course['description'] ?? 'No description provided') ?></dd>
 

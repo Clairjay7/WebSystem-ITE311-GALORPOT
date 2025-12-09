@@ -32,6 +32,59 @@ class Admin extends BaseController
         return null;
     }
 
+    /**
+     * Check for time conflict for a teacher
+     * Returns true if there's a conflict (same teacher, same time, same semester, same term)
+     * @param int $teacherId The teacher ID to check
+     * @param string $time The time slot to check
+     * @param int $schoolYearId The school year ID
+     * @param int $semester The semester (1 or 2)
+     * @param int $term The term (1 or 2)
+     * @param int|null $excludeCourseId Course ID to exclude from check (for updates)
+     * @return bool True if conflict exists, false otherwise
+     */
+    private function checkTimeConflict($teacherId, $time, $schoolYearId, $semester, $term, $excludeCourseId = null)
+    {
+        $courseModel = new CourseModel();
+        $teacherAssignmentModel = new TeacherAssignmentModel();
+        
+        // Check courses where instructor_id matches
+        $builder = $courseModel
+            ->where('instructor_id', $teacherId)
+            ->where('time', $time)
+            ->where('school_year_id', $schoolYearId)
+            ->where('semester', $semester)
+            ->where('term', $term);
+        
+        if ($excludeCourseId !== null) {
+            $builder->where('id !=', $excludeCourseId);
+        }
+        
+        $conflict = $builder->first();
+        if ($conflict) {
+            return true;
+        }
+        
+        // Check courses assigned via teacher_assignments
+        $assignments = $teacherAssignmentModel
+            ->where('teacher_id', $teacherId)
+            ->where('school_year_id', $schoolYearId)
+            ->where('semester', $semester)
+            ->where('term', $term)
+            ->findAll();
+        
+        foreach ($assignments as $assignment) {
+            $course = $courseModel->find($assignment['course_id']);
+            if ($course && $course['time'] === $time) {
+                if ($excludeCourseId === null || $course['id'] != $excludeCourseId) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
     public function dashboard()
     {
         // Redirect to unified dashboard
@@ -131,7 +184,15 @@ class Admin extends BaseController
         file_put_contents(WRITEPATH . 'createuser_debug.txt', "PASSED POST CHECK\n", FILE_APPEND);
 
         $rules = [
-            'name' => 'required|min_length[3]',
+            'name' => [
+                'label' => 'Name',
+                'rules' => 'required|min_length[3]|alpha_numeric_space',
+                'errors' => [
+                    'required' => 'Name is required',
+                    'min_length' => 'Name must be at least 3 characters long',
+                    'alpha_numeric_space' => 'Name can only contain letters, numbers, and spaces. Special characters are not allowed.',
+                ],
+            ],
             'email' => 'required|valid_email|is_unique[users.email]',
             'password' => 'required|min_length[6]',
             'role' => 'required|in_list[student,instructor,admin]'
@@ -141,6 +202,9 @@ class Admin extends BaseController
             $errors = $this->validator->getErrors();
             log_message('error', 'Validation failed: ' . json_encode($errors));
             file_put_contents(WRITEPATH . 'createuser_debug.txt', "VALIDATION FAILED: " . json_encode($errors) . "\n\n", FILE_APPEND);
+            
+            // Store validation errors for display
+            session()->setFlashdata('validation', $errors);
             session()->setFlashdata('error', 'Validation failed: ' . implode(', ', $errors));
             return redirect()->to('/dashboard');
         }
@@ -207,13 +271,23 @@ class Admin extends BaseController
         }
         
         $rules = [
-            'name' => 'required|min_length[3]',
+            'name' => [
+                'label' => 'Name',
+                'rules' => 'required|min_length[3]|alpha_numeric_space',
+                'errors' => [
+                    'required' => 'Name is required',
+                    'min_length' => 'Name must be at least 3 characters long',
+                    'alpha_numeric_space' => 'Name can only contain letters, numbers, and spaces. Special characters are not allowed.',
+                ],
+            ],
             'email' => 'required|valid_email',
             'role' => 'required|in_list[student,instructor,admin]'
         ];
 
         if (!$this->validate($rules)) {
-            session()->setFlashdata('error', 'Validation failed: ' . implode(', ', $this->validator->getErrors()));
+            $errors = $this->validator->getErrors();
+            session()->setFlashdata('validation', $errors);
+            session()->setFlashdata('error', 'Validation failed: ' . implode(', ', $errors));
             return redirect()->to('/dashboard');
         }
 
@@ -351,8 +425,9 @@ class Admin extends BaseController
         $userModel = new UserModel();
 
         $data = [
-            'courses' => $courseModel->select('courses.*, school_years.school_year')
+            'courses' => $courseModel->select('courses.*, school_years.school_year, users.name as instructor_name')
                 ->join('school_years', 'school_years.id = courses.school_year_id', 'left')
+                ->join('users', 'users.id = courses.instructor_id', 'left')
                 ->orderBy('courses.created_at', 'DESC')
                 ->findAll(),
             'deleted_courses' => $courseModel->select('courses.*, school_years.school_year')
@@ -388,11 +463,11 @@ class Admin extends BaseController
         $rules = [
             'title' => [
                 'label' => 'Course Title',
-                'rules' => 'required|min_length[3]|max_length[150]|alpha_numeric_space',
+                'rules' => 'required|min_length[3]|max_length[30]|alpha_numeric_space',
                 'errors' => [
                     'required' => 'Course Title is required',
                     'min_length' => 'Course Title must be at least 3 characters long',
-                    'max_length' => 'Course Title must not exceed 150 characters',
+                    'max_length' => 'Course Title must not exceed 30 characters',
                     'alpha_numeric_space' => 'Course Title can only contain letters, numbers, and spaces. Special characters are not allowed.',
                 ],
             ],
@@ -431,6 +506,7 @@ class Admin extends BaseController
             'control_number' => $controlNumber,
             'units' => (int) $this->request->getPost('units'),
             'description' => $this->request->getPost('description'),
+            'time' => $this->request->getPost('time'),
             'instructor_id' => null, // Instructor will be assigned via Teacher Assignment Management
             'school_year_id' => $this->request->getPost('school_year_id'),
             'semester' => $this->request->getPost('semester'),
@@ -441,6 +517,15 @@ class Admin extends BaseController
             log_message('error', 'CREATE COURSE - Academic structure validation failed');
             session()->setFlashdata('error', 'Course must be assigned to a School Year, Semester, and Term.');
             return redirect()->to('/admin/courses')->withInput();
+        }
+
+        // Check for time conflict if instructor is assigned
+        if (!empty($data['time']) && !empty($data['instructor_id'])) {
+            $conflict = $this->checkTimeConflict($data['instructor_id'], $data['time'], $data['school_year_id'], $data['semester'], $data['term'], null);
+            if ($conflict) {
+                session()->setFlashdata('error', 'Time conflict: The selected teacher already has a course scheduled at ' . $data['time'] . ' for the same semester and term.');
+                return redirect()->to('/admin/courses')->withInput();
+            }
         }
 
         // Validate that the selected school year is active
@@ -502,16 +587,22 @@ class Admin extends BaseController
 
     public function updateCourse()
     {
+        log_message('info', 'UPDATE COURSE METHOD CALLED - Method: ' . $this->request->getMethod());
+        log_message('info', 'UPDATE COURSE - POST data: ' . json_encode($this->request->getPost()));
+        
         if ($redirect = $this->ensureAdmin()) {
+            log_message('info', 'UPDATE COURSE - Not admin, redirecting');
             return $redirect;
         }
 
-        if ($this->request->getMethod() !== 'post') {
+        if (!$this->request->is('post')) {
+            log_message('error', 'UPDATE COURSE - Method is not POST. Method was: ' . $this->request->getMethod());
             return redirect()->to('/admin/courses');
         }
 
         $courseModel = new CourseModel();
         $id = $this->request->getPost('id');
+        log_message('info', 'UPDATE COURSE - Course ID: ' . $id);
         $existingCourse = $courseModel->find($id);
         
         // Check if control_number is being changed
@@ -521,11 +612,11 @@ class Admin extends BaseController
         $rules = [
             'title' => [
                 'label' => 'Course Title',
-                'rules' => 'required|min_length[3]|max_length[150]|alpha_numeric_space',
+                'rules' => 'required|min_length[3]|max_length[30]|alpha_numeric_space',
                 'errors' => [
                     'required' => 'Course Title is required',
                     'min_length' => 'Course Title must be at least 3 characters long',
-                    'max_length' => 'Course Title must not exceed 150 characters',
+                    'max_length' => 'Course Title must not exceed 30 characters',
                     'alpha_numeric_space' => 'Course Title can only contain letters, numbers, and spaces. Special characters are not allowed.',
                 ],
             ],
@@ -557,16 +648,35 @@ class Admin extends BaseController
             $controlNumber = 'CN-' . $controlNumberYear;
         }
         
+        $time = $this->request->getPost('time');
+        // Convert empty string to null for database
+        $timeValue = ($time === '' || $time === null) ? null : $time;
+        
         $data = [
             'title' => $this->request->getPost('title'),
             'control_number' => $controlNumber,
             'units' => (int) $this->request->getPost('units'),
             'description' => $this->request->getPost('description'),
-            'instructor_id' => null, // Instructor will be assigned via Teacher Assignment Management
+            'time' => $timeValue,
+            'instructor_id' => $existingCourse['instructor_id'], // Keep existing instructor_id
             'school_year_id' => $this->request->getPost('school_year_id'),
             'semester' => $this->request->getPost('semester'),
             'term' => $this->request->getPost('term'),
         ];
+        
+        log_message('info', 'UPDATE COURSE - ID: ' . $id);
+        log_message('info', 'UPDATE COURSE - Time POST value: ' . var_export($time, true));
+        log_message('info', 'UPDATE COURSE - Time value to save: ' . var_export($timeValue, true));
+        log_message('info', 'UPDATE COURSE - Full data: ' . json_encode($data));
+
+        // Check for time conflict if instructor is assigned
+        if (!empty($data['time']) && !empty($data['instructor_id'])) {
+            $conflict = $this->checkTimeConflict($data['instructor_id'], $data['time'], $data['school_year_id'], $data['semester'], $data['term'], $id);
+            if ($conflict) {
+                session()->setFlashdata('error', 'Time conflict: The assigned teacher already has a course scheduled at ' . $data['time'] . ' for the same semester and term.');
+                return redirect()->to('/admin/courses');
+            }
+        }
 
         // Validate that the selected school year is active
         $schoolYearModel = new SchoolYearModel();
@@ -582,10 +692,19 @@ class Admin extends BaseController
             return redirect()->to('/admin/courses');
         }
 
-        if ($courseModel->update($id, $data)) {
+        $updateResult = $courseModel->update($id, $data);
+        log_message('info', 'UPDATE COURSE - Update result: ' . ($updateResult ? 'SUCCESS' : 'FAILED'));
+        if (!$updateResult) {
+            $errors = $courseModel->errors();
+            log_message('error', 'UPDATE COURSE - Errors: ' . json_encode($errors));
+        }
+        
+        if ($updateResult) {
             session()->setFlashdata('success', 'Course updated successfully!');
         } else {
-            session()->setFlashdata('error', 'Failed to update course.');
+            $errors = $courseModel->errors();
+            $errorMsg = !empty($errors) ? implode(', ', $errors) : 'Unknown error';
+            session()->setFlashdata('error', 'Failed to update course: ' . $errorMsg);
         }
 
         return redirect()->to('/admin/courses');
@@ -916,13 +1035,13 @@ class Admin extends BaseController
         $userModel = new UserModel();
 
         $data = [
-            'assignments' => $teacherAssignmentModel->select('teacher_assignments.*, users.name as teacher_name, courses.title as course_title, courses.control_number, courses.units, school_years.school_year')
+            'assignments' => $teacherAssignmentModel->select('teacher_assignments.*, users.name as teacher_name, courses.title as course_title, courses.control_number, courses.units, courses.time, school_years.school_year')
                 ->join('users', 'users.id = teacher_assignments.teacher_id')
                 ->join('courses', 'courses.id = teacher_assignments.course_id')
                 ->join('school_years', 'school_years.id = teacher_assignments.school_year_id')
                 ->orderBy('teacher_assignments.created_at', 'DESC')
                 ->findAll(),
-            'deleted_assignments' => $teacherAssignmentModel->select('teacher_assignments.*, users.name as teacher_name, courses.title as course_title, courses.control_number, courses.units, school_years.school_year')
+            'deleted_assignments' => $teacherAssignmentModel->select('teacher_assignments.*, users.name as teacher_name, courses.title as course_title, courses.control_number, courses.units, courses.time, school_years.school_year')
                 ->join('users', 'users.id = teacher_assignments.teacher_id')
                 ->join('courses', 'courses.id = teacher_assignments.course_id')
                 ->join('school_years', 'school_years.id = teacher_assignments.school_year_id')
@@ -931,7 +1050,7 @@ class Admin extends BaseController
                 ->orderBy('teacher_assignments.deleted_at', 'DESC')
                 ->findAll(),
             'teachers' => $userModel->where('role', 'instructor')->findAll(),
-            'courses' => $courseModel->select('courses.*, courses.control_number, courses.units, school_years.school_year')
+            'courses' => $courseModel->select('courses.*, courses.control_number, courses.units, courses.time, school_years.school_year')
                 ->join('school_years', 'school_years.id = courses.school_year_id', 'left')
                 ->where('courses.school_year_id IS NOT NULL')
                 ->where('courses.semester IS NOT NULL')
@@ -990,6 +1109,15 @@ class Admin extends BaseController
         if ($teacherAssignmentModel->isAssigned($teacherId, $courseId, $course['school_year_id'], $course['semester'], $course['term'])) {
             session()->setFlashdata('error', 'Teacher is already assigned to this course for this academic period.');
             return redirect()->to('/admin/teacher-assignments');
+        }
+
+        // Check for time conflict if course has a time set
+        if (!empty($course['time'])) {
+            $conflict = $this->checkTimeConflict($teacherId, $course['time'], $course['school_year_id'], $course['semester'], $course['term'], null);
+            if ($conflict) {
+                session()->setFlashdata('error', 'Time conflict: The teacher already has a course scheduled at ' . $course['time'] . ' for the same semester and term.');
+                return redirect()->to('/admin/teacher-assignments');
+            }
         }
 
         $data = [
@@ -1089,6 +1217,15 @@ class Admin extends BaseController
         if ($teacherAssignmentModel->isAssigned($teacherId, $courseId, $course['school_year_id'], $course['semester'], $course['term'], $id)) {
             session()->setFlashdata('error', 'Teacher is already assigned to this course for this academic period.');
             return redirect()->to('/admin/teacher-assignments');
+        }
+
+        // Check for time conflict if course has a time set
+        if (!empty($course['time'])) {
+            $conflict = $this->checkTimeConflict($teacherId, $course['time'], $course['school_year_id'], $course['semester'], $course['term'], $courseId);
+            if ($conflict) {
+                session()->setFlashdata('error', 'Time conflict: The teacher already has a course scheduled at ' . $course['time'] . ' for the same semester and term.');
+                return redirect()->to('/admin/teacher-assignments');
+            }
         }
 
         $data = [

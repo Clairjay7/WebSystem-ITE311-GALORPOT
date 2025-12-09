@@ -46,12 +46,6 @@
             <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Create New School Year</h5>
         </div>
         <div class="card-body">
-            <?php if (isset($has_active_academic_period) && $has_active_academic_period && isset($active_academic_period_info)): ?>
-                <div class="alert alert-danger mb-3">
-                    <strong><i class="fas fa-exclamation-triangle"></i> Cannot Create Academic Structure:</strong> 
-                    <p class="mb-0"><?= esc($active_academic_period_info['message']) ?></p>
-                </div>
-            <?php endif; ?>
             <?php if (isset($current_year_exists) && !$current_year_exists): ?>
                 <div class="alert alert-danger mb-3">
                     <strong><i class="fas fa-exclamation-triangle"></i> Cannot Create Future School Year:</strong> 

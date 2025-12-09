@@ -335,7 +335,7 @@ class Dashboard extends BaseController
                 if ($hasStatusColumn) {
                     // Get all approved enrollments (across all terms)
                     $allEnrollments = $enrollmentModel
-                        ->select('enrollments.*, courses.title as course_title, courses.description, courses.control_number, courses.units, courses.school_year_id as course_school_year_id, courses.semester as course_semester, courses.term as course_term, users.name as instructor_name')
+                        ->select('enrollments.*, courses.title as course_title, courses.description, courses.control_number, courses.units, courses.time, courses.school_year_id as course_school_year_id, courses.semester as course_semester, courses.term as course_term, users.name as instructor_name')
                         ->join('courses', 'courses.id = enrollments.course_id')
                         ->join('users', 'users.id = courses.instructor_id', 'left')
                         ->where('enrollments.user_id', $userId)
@@ -345,7 +345,7 @@ class Dashboard extends BaseController
                 } else {
                     // If no status column, get all enrollments
                     $allEnrollments = $enrollmentModel
-                        ->select('enrollments.*, courses.title as course_title, courses.description, courses.control_number, courses.units, courses.school_year_id as course_school_year_id, courses.semester as course_semester, courses.term as course_term, users.name as instructor_name')
+                        ->select('enrollments.*, courses.title as course_title, courses.description, courses.control_number, courses.units, courses.time, courses.school_year_id as course_school_year_id, courses.semester as course_semester, courses.term as course_term, users.name as instructor_name')
                         ->join('courses', 'courses.id = enrollments.course_id')
                         ->join('users', 'users.id = courses.instructor_id', 'left')
                         ->where('enrollments.user_id', $userId)

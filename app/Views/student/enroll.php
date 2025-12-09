@@ -95,6 +95,8 @@
                             <tr>
                                 <th>Course</th>
                                 <th>Description</th>
+                                <th>Units</th>
+                                <th>Time</th>
                                 <th>Instructor</th>
                                 <th>Course End Date</th>
                                 <th>Actions</th>
@@ -105,6 +107,8 @@
                                 <tr>
                                     <td><strong><?= esc($course['title']) ?></strong></td>
                                     <td><?= esc($course['description'] ?? 'N/A') ?></td>
+                                    <td><span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span></td>
+                                    <td><?= esc($course['time'] ?? 'N/A') ?></td>
                                     <td><?= esc($course['instructor_name'] ?? 'Not assigned') ?></td>
                                     <td>
                                         <?php if (isset($course['term_end_date'])): ?>
@@ -239,6 +243,18 @@
                                             <small class="text-muted">
                                                 <i class="fas fa-chalkboard-teacher"></i> 
                                                 <strong>Instructor:</strong> <?= esc($course['instructor_name'] ?? 'Not assigned') ?>
+                                            </small>
+                                        </p>
+                                        <p class="card-text mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock"></i> 
+                                                <strong>Time:</strong> <?= esc($course['time'] ?? 'N/A') ?>
+                                            </small>
+                                        </p>
+                                        <p class="card-text mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-book"></i> 
+                                                <strong>Units:</strong> <span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span>
                                             </small>
                                         </p>
                                         <form method="post" action="<?= site_url('/student/enroll/self-enroll') ?>" class="d-inline">

@@ -36,8 +36,8 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label for="title" class="form-label">Course Title <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="title" name="title" value="<?= function_exists('set_value') ? set_value('title') : (old('title') ?? '') ?>" required minlength="3" maxlength="150" pattern="^[a-zA-Z0-9\s]+$" placeholder="Enter course title" title="Only letters, numbers, and spaces are allowed">
-                        <small class="form-text text-muted">Minimum 3 characters, maximum 150 characters. Only letters, numbers, and spaces allowed (no special characters).</small>
+                        <input type="text" class="form-control" id="title" name="title" value="<?= function_exists('set_value') ? set_value('title') : (old('title') ?? '') ?>" required minlength="3" maxlength="30" pattern="^[a-zA-Z0-9\s]+$" placeholder="Enter course title" title="Only letters, numbers, and spaces are allowed">
+                        <small class="form-text text-muted">Minimum 3 characters, maximum 30 characters. Only letters, numbers, and spaces allowed (no special characters).</small>
                         <?php if (session()->getFlashdata('validation') && isset(session()->getFlashdata('validation')['title'])): ?>
                             <div class="text-danger small"><?= session()->getFlashdata('validation')['title'] ?></div>
                         <?php endif; ?>
@@ -63,6 +63,26 @@
                         <?php if (session()->getFlashdata('validation') && isset(session()->getFlashdata('validation')['units'])): ?>
                             <div class="text-danger small"><?= session()->getFlashdata('validation')['units'] ?></div>
                         <?php endif; ?>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="time" class="form-label">Time</label>
+                        <select class="form-select" id="time" name="time">
+                            <option value="">Select Time</option>
+                            <option value="7:00 AM - 8:00 AM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '7:00 AM - 8:00 AM' ? 'selected' : '' ?>>7:00 AM - 8:00 AM</option>
+                            <option value="8:00 AM - 9:00 AM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '8:00 AM - 9:00 AM' ? 'selected' : '' ?>>8:00 AM - 9:00 AM</option>
+                            <option value="9:00 AM - 10:00 AM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '9:00 AM - 10:00 AM' ? 'selected' : '' ?>>9:00 AM - 10:00 AM</option>
+                            <option value="10:00 AM - 11:00 AM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '10:00 AM - 11:00 AM' ? 'selected' : '' ?>>10:00 AM - 11:00 AM</option>
+                            <option value="11:00 AM - 12:00 PM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '11:00 AM - 12:00 PM' ? 'selected' : '' ?>>11:00 AM - 12:00 PM</option>
+                            <option value="12:00 PM - 1:00 PM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '12:00 PM - 1:00 PM' ? 'selected' : '' ?>>12:00 PM - 1:00 PM</option>
+                            <option value="1:00 PM - 2:00 PM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '1:00 PM - 2:00 PM' ? 'selected' : '' ?>>1:00 PM - 2:00 PM</option>
+                            <option value="2:00 PM - 3:00 PM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '2:00 PM - 3:00 PM' ? 'selected' : '' ?>>2:00 PM - 3:00 PM</option>
+                            <option value="3:00 PM - 4:00 PM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '3:00 PM - 4:00 PM' ? 'selected' : '' ?>>3:00 PM - 4:00 PM</option>
+                            <option value="4:00 PM - 5:00 PM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '4:00 PM - 5:00 PM' ? 'selected' : '' ?>>4:00 PM - 5:00 PM</option>
+                            <option value="5:00 PM - 6:00 PM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '5:00 PM - 6:00 PM' ? 'selected' : '' ?>>5:00 PM - 6:00 PM</option>
+                            <option value="6:00 PM - 7:00 PM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '6:00 PM - 7:00 PM' ? 'selected' : '' ?>>6:00 PM - 7:00 PM</option>
+                            <option value="7:00 PM - 8:00 PM" <?= (function_exists('set_value') ? set_value('time') : (old('time') ?? '')) == '7:00 PM - 8:00 PM' ? 'selected' : '' ?>>7:00 PM - 8:00 PM</option>
+                        </select>
+                        <small class="form-text text-muted">Select course schedule time</small>
                     </div>
                     <div class="col-md-12">
                         <label for="description" class="form-label">Description</label>
@@ -132,6 +152,8 @@
                             <th>Control Number</th>
                             <th>Title</th>
                             <th>Units</th>
+                            <th>Time</th>
+                            <th>Instructor</th>
                             <th>School Year</th>
                             <th>Semester</th>
                             <th>Term</th>
@@ -146,6 +168,8 @@
                                     <td><strong><?= esc($course['control_number'] ?? 'N/A') ?></strong></td>
                                     <td><?= esc($course['title']) ?></td>
                                     <td><span class="badge bg-info"><?= $course['units'] ?? '0' ?> units</span></td>
+                                    <td><?= esc($course['time'] ?? 'N/A') ?></td>
+                                    <td><?= esc($course['instructor_name'] ?? 'Not Assigned') ?></td>
                                     <td><?= esc($course['school_year'] ?? 'N/A') ?></td>
                                     <td>Semester <?= $course['semester'] ?? 'N/A' ?></td>
                                     <td>Term <?= $course['term'] ?? 'N/A' ?></td>
@@ -163,9 +187,9 @@
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr><td colspan="8" class="text-center text-muted">No courses found</td></tr>
-                        <?php endif; ?>
+                            <?php else: ?>
+                                <tr><td colspan="10" class="text-center text-muted">No courses found</td></tr>
+                            <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -238,8 +262,8 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="edit_title" class="form-label">Title</label>
-                        <input type="text" class="form-control" id="edit_title" name="title" required minlength="3" maxlength="150" pattern="^[a-zA-Z0-9\s]+$" placeholder="Enter course title" title="Only letters, numbers, and spaces are allowed">
-                        <small class="form-text text-muted">Minimum 3 characters, maximum 150 characters. Only letters, numbers, and spaces allowed (no special characters).</small>
+                        <input type="text" class="form-control" id="edit_title" name="title" required minlength="3" maxlength="30" pattern="^[a-zA-Z0-9\s]+$" placeholder="Enter course title" title="Only letters, numbers, and spaces are allowed">
+                        <small class="form-text text-muted">Minimum 3 characters, maximum 30 characters. Only letters, numbers, and spaces allowed (no special characters).</small>
                     </div>
                     <div class="mb-3">
                         <label for="edit_control_number_year" class="form-label">Control Number (CN)</label>
@@ -256,6 +280,26 @@
                         <input type="number" class="form-control" id="edit_units" name="units" required min="0" max="5" step="1">
                         <small class="form-text text-muted">Maximum 5 units only</small>
                         <div class="text-danger small mt-1 units-error-msg" style="display: none;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_time" class="form-label">Time</label>
+                        <select class="form-select" id="edit_time" name="time">
+                            <option value="">Select Time</option>
+                            <option value="7:00 AM - 8:00 AM">7:00 AM - 8:00 AM</option>
+                            <option value="8:00 AM - 9:00 AM">8:00 AM - 9:00 AM</option>
+                            <option value="9:00 AM - 10:00 AM">9:00 AM - 10:00 AM</option>
+                            <option value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</option>
+                            <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
+                            <option value="12:00 PM - 1:00 PM">12:00 PM - 1:00 PM</option>
+                            <option value="1:00 PM - 2:00 PM">1:00 PM - 2:00 PM</option>
+                            <option value="2:00 PM - 3:00 PM">2:00 PM - 3:00 PM</option>
+                            <option value="3:00 PM - 4:00 PM">3:00 PM - 4:00 PM</option>
+                            <option value="4:00 PM - 5:00 PM">4:00 PM - 5:00 PM</option>
+                            <option value="5:00 PM - 6:00 PM">5:00 PM - 6:00 PM</option>
+                            <option value="6:00 PM - 7:00 PM">6:00 PM - 7:00 PM</option>
+                            <option value="7:00 PM - 8:00 PM">7:00 PM - 8:00 PM</option>
+                        </select>
+                        <small class="form-text text-muted">Select course schedule time</small>
                     </div>
                     <div class="mb-3">
                         <label for="edit_description" class="form-label">Description</label>
@@ -315,6 +359,10 @@ function editCourse(course) {
     }
     
     document.getElementById('edit_units').value = course.units || '0';
+    // Set time value - handle null/undefined/empty
+    const timeValue = course.time || '';
+    document.getElementById('edit_time').value = timeValue;
+    console.log('Setting time value:', timeValue, 'from course.time:', course.time);
     document.getElementById('edit_description').value = course.description || '';
     document.getElementById('edit_school_year_id').value = course.school_year_id || '';
     document.getElementById('edit_semester').value = course.semester || '';
@@ -347,6 +395,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const editForm = document.querySelector('form[action*="/admin/courses/update"]');
     if (editForm) {
         editForm.addEventListener('submit', function(e) {
+            // Log form data before submission
+            const formData = new FormData(editForm);
+            console.log('Edit form submitting with data:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ':', value);
+            }
             // Ensure control_number is set before submission
             const yearInput = document.getElementById('edit_control_number_year');
             const hiddenInput = document.getElementById('edit_control_number');

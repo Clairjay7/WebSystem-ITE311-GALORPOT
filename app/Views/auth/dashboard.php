@@ -299,6 +299,7 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 								<tr>
 									<th>Course</th>
 									<th>Description</th>
+									<th>Time</th>
 									<th>Enrollment Date</th>
 									<th>Course End Date</th>
 									<th>Actions</th>
@@ -309,6 +310,7 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 									<tr>
 										<td><?= esc($enrollment['course_title']) ?></td>
 										<td><?= esc($enrollment['description'] ?? 'N/A') ?></td>
+										<td><?= esc($enrollment['time'] ?? 'N/A') ?></td>
 										<td><?= date('M d, Y', strtotime($enrollment['enrollment_date'])) ?></td>
 										<td>
 											<?php if (isset($enrollment['term_end_date'])): ?>
@@ -371,9 +373,14 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 							<thead>
 								<tr>
 									<th>CN</th>
-									<th>Course</th>
+									<th>Course Title</th>
 									<th>Units</th>
+									<th>Time</th>
 									<th>Description</th>
+									<th>School Year</th>
+									<th>Semester</th>
+									<th>Term</th>
+									<th>Created</th>
 									<th>Actions</th>
 								</tr>
 							</thead>
@@ -381,9 +388,20 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 								<?php foreach ($assigned_courses as $course): ?>
 									<tr>
 										<td><strong><?= esc($course['control_number'] ?? 'N/A') ?></strong></td>
-										<td><?= esc($course['title']) ?></td>
+										<td><strong><?= esc($course['title']) ?></strong></td>
 										<td><span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span></td>
+										<td><?= esc($course['time'] ?? 'N/A') ?></td>
 										<td><?= esc($course['description'] ?? 'N/A') ?></td>
+										<td>
+											<?php
+											$schoolYearModel = new \App\Models\SchoolYearModel();
+											$sy = $schoolYearModel->find($course['school_year_id'] ?? null);
+											echo $sy ? esc($sy['school_year']) : 'N/A';
+											?>
+										</td>
+										<td>Semester <?= $course['semester'] ?? 'N/A' ?></td>
+										<td>Term <?= $course['term'] ?? 'N/A' ?></td>
+										<td><?= isset($course['created_at']) ? date('M d, Y', strtotime($course['created_at'])) : 'N/A' ?></td>
 										<td>
 											<a href="<?= site_url('/instructor/course/' . $course['id']) ?>" class="btn btn-sm btn-primary">
 												<i class="fas fa-cog"></i> Manage Course
@@ -624,7 +642,11 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 						<div class="row g-3">
 							<div class="col-md-6">
 								<label for="simple_name" class="form-label">Name *</label>
-								<input type="text" class="form-control" id="simple_name" name="name" required>
+								<input type="text" class="form-control" id="simple_name" name="name" required minlength="3" pattern="^[a-zA-Z0-9\s]+$" placeholder="Enter name" title="Only letters, numbers, and spaces are allowed">
+								<small class="form-text text-muted">Minimum 3 characters. Only letters, numbers, and spaces allowed (no special characters).</small>
+								<?php if (session()->getFlashdata('validation') && isset(session()->getFlashdata('validation')['name'])): ?>
+									<div class="text-danger small mt-1"><?= session()->getFlashdata('validation')['name'] ?></div>
+								<?php endif; ?>
 							</div>
 							<div class="col-md-6">
 								<label for="simple_email" class="form-label">Email *</label>
@@ -785,7 +807,11 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 						<div class="modal-body">
 							<div class="mb-3">
 								<label for="create_user_name" class="form-label">Name</label>
-								<input type="text" class="form-control" id="create_user_name" name="name" autocomplete="name" required>
+								<input type="text" class="form-control" id="create_user_name" name="name" autocomplete="name" required minlength="3" pattern="^[a-zA-Z0-9\s]+$" placeholder="Enter name" title="Only letters, numbers, and spaces are allowed">
+								<small class="form-text text-muted">Minimum 3 characters. Only letters, numbers, and spaces allowed (no special characters).</small>
+								<?php if (session()->getFlashdata('validation') && isset(session()->getFlashdata('validation')['name'])): ?>
+									<div class="text-danger small mt-1"><?= session()->getFlashdata('validation')['name'] ?></div>
+								<?php endif; ?>
 							</div>
 							<div class="mb-3">
 								<label for="create_user_email" class="form-label">Email</label>
@@ -827,7 +853,8 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 						<div class="modal-body">
 							<div class="mb-3">
 								<label for="edit_user_name" class="form-label">Name</label>
-								<input type="text" class="form-control" name="name" id="edit_user_name" autocomplete="name" required>
+								<input type="text" class="form-control" name="name" id="edit_user_name" autocomplete="name" required minlength="3" pattern="^[a-zA-Z0-9\s]+$" placeholder="Enter name" title="Only letters, numbers, and spaces are allowed">
+								<small class="form-text text-muted">Minimum 3 characters. Only letters, numbers, and spaces allowed (no special characters).</small>
 							</div>
 							<div class="mb-3">
 								<label for="edit_user_email" class="form-label">Email</label>

@@ -52,7 +52,7 @@
                                     data-school-year="<?= $course['school_year_id'] ?>"
                                     data-semester="<?= $course['semester'] ?>"
                                     data-term="<?= $course['term'] ?>">
-                                    <?= esc($course['control_number'] ?? 'N/A') ?> - <?= esc($course['title']) ?> (<?= $course['units'] ?? '0' ?> units) - <?= esc($course['school_year'] ?? 'N/A') ?> - Semester <?= $course['semester'] ?>, Term <?= $course['term'] ?>
+                                    <?= esc($course['control_number'] ?? 'N/A') ?> - <?= esc($course['title']) ?> (<?= $course['units'] ?? '0' ?> units)<?= !empty($course['time']) ? ' - ' . esc($course['time']) : '' ?> - <?= esc($course['school_year'] ?? 'N/A') ?> - Semester <?= $course['semester'] ?>, Term <?= $course['term'] ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -83,6 +83,7 @@
                             <th>Course</th>
                             <th>Control Number</th>
                             <th>Units</th>
+                            <th>Time</th>
                             <th>School Year</th>
                             <th>Semester</th>
                             <th>Term</th>
@@ -98,6 +99,7 @@
                                     <td><?= esc($assignment['course_title']) ?></td>
                                     <td><strong><?= esc($assignment['control_number'] ?? 'N/A') ?></strong></td>
                                     <td><span class="badge bg-info"><?= $assignment['units'] ?? '0' ?> units</span></td>
+                                    <td><?= esc($assignment['time'] ?? 'N/A') ?></td>
                                     <td><?= esc($assignment['school_year']) ?></td>
                                     <td>Semester <?= $assignment['semester'] ?></td>
                                     <td>Term <?= $assignment['term'] ?></td>
@@ -116,7 +118,7 @@
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr><td colspan="9" class="text-center text-muted">No assignments found</td></tr>
+                            <tr><td colspan="10" class="text-center text-muted">No assignments found</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -140,6 +142,7 @@
                             <th>Course</th>
                             <th>CN</th>
                             <th>Units</th>
+                            <th>Time</th>
                             <th>School Year</th>
                             <th>Semester</th>
                             <th>Term</th>
@@ -155,6 +158,7 @@
                                 <td><?= esc($assignment['course_title']) ?></td>
                                 <td><strong><?= esc($assignment['control_number'] ?? 'N/A') ?></strong></td>
                                 <td><span class="badge bg-info"><?= $assignment['units'] ?? '0' ?> units</span></td>
+                                <td><?= esc($assignment['time'] ?? 'N/A') ?></td>
                                 <td><?= esc($assignment['school_year']) ?></td>
                                 <td>Semester <?= $assignment['semester'] ?></td>
                                 <td>Term <?= $assignment['term'] ?></td>

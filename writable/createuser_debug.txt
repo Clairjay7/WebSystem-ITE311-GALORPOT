@@ -75,3 +75,29 @@ PASSED VALIDATION
 ATTEMPTING INSERT...
 SUCCESS! User ID: 8
 
+2025-12-09 00:51:56 - CREATE USER CALLED
+Method: POST (type: string)
+Method === 'post': NO
+Method !== 'post': YES
+POST: {"csrf_test_name":"358c4012b408ed921ae79ba2834547bf","name":"Galorpot","email":"galorpot@gmail.com","password":"123123","role":"instructor"}
+
+PASSED ADMIN CHECK
+Checking method: POST (lowercase: post)
+PASSED POST CHECK
+PASSED VALIDATION
+ATTEMPTING INSERT...
+SUCCESS! User ID: 5
+
+2025-12-09 01:30:03 - CREATE USER CALLED
+Method: POST (type: string)
+Method === 'post': NO
+Method !== 'post': YES
+POST: {"csrf_test_name":"358c4012b408ed921ae79ba2834547bf","name":"Galorpot","email":"galorpot@gmail.com","password":"123123","role":"instructor"}
+
+PASSED ADMIN CHECK
+Checking method: POST (lowercase: post)
+PASSED POST CHECK
+PASSED VALIDATION
+ATTEMPTING INSERT...
+SUCCESS! User ID: 4
+

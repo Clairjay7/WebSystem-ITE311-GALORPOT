@@ -31,15 +31,36 @@ class UserSeeder extends Seeder
             ],
         ];
 
+        // Get list of emails from seeder
+        $seederEmails = array_column($users, 'email');
+        
+        // Permanently delete all instructors that are not in the seeder
+        $allInstructors = $this->db->table('users')
+            ->where('role', 'instructor')
+            ->get()
+            ->getResultArray();
+        
+        foreach ($allInstructors as $instructor) {
+            if (!in_array($instructor['email'], $seederEmails)) {
+                // Permanently delete instructors not in seeder
+                $this->db->table('users')
+                    ->where('id', $instructor['id'])
+                    ->delete();
+            }
+        }
+
         // Update existing users or insert new ones
         foreach ($users as $user) {
             $existing = $this->db->table('users')->where('email', $user['email'])->get()->getRowArray();
             
             if ($existing) {
-                // Update existing user's password
+                // Update existing user's password and restore if deleted
                 $this->db->table('users')
                     ->where('email', $user['email'])
-                    ->update(['password' => $user['password']]);
+                    ->update([
+                        'password' => $user['password'],
+                        'deleted_at' => null // Restore if previously deleted
+                    ]);
             } else {
                 // Insert new user
                 $this->db->table('users')->insert($user);

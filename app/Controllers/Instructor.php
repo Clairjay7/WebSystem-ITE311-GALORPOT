@@ -441,6 +441,40 @@ class Instructor extends BaseController
             return redirect()->back();
         }
 
+        // Check for time conflict: student cannot be enrolled in courses with same time, same semester, same term
+        if (!empty($course['time'])) {
+            // Get all approved enrollments for this student in the same semester and term
+            $conflictingEnrollments = $enrollmentModel
+                ->select('enrollments.*, courses.time, courses.title as course_title')
+                ->join('courses', 'courses.id = enrollments.course_id')
+                ->where('enrollments.user_id', $studentId)
+                ->where('enrollments.school_year_id', $course['school_year_id'])
+                ->where('enrollments.semester', $course['semester'])
+                ->where('enrollments.term', $course['term'])
+                ->where('courses.time', $course['time'])
+                ->where('courses.time IS NOT NULL')
+                ->where('courses.time !=', '');
+            
+            // Only check approved enrollments
+            try {
+                $db = \Config\Database::connect();
+                $columns = $db->getFieldNames('enrollments');
+                if (in_array('status', $columns)) {
+                    $conflictingEnrollments->where('enrollments.status', 'approved');
+                }
+            } catch (\Exception $e) {
+                // Status column doesn't exist, continue
+            }
+            
+            $conflict = $conflictingEnrollments->first();
+            
+            if ($conflict) {
+                session()->setFlashdata('error', 'Cannot enroll student: The student is already enrolled in "' . esc($conflict['course_title']) . '" at the same time (' . esc($course['time']) . ') for the same semester and term.');
+                log_message('info', 'Time conflict detected: Student ' . $studentId . ' already enrolled in course ' . $conflict['course_id'] . ' at time ' . $course['time']);
+                return redirect()->back();
+            }
+        }
+
         // Create enrollment (direct enrollment by teacher is automatically approved)
         $enrollmentData = [
             'user_id' => $studentId,
@@ -593,6 +627,43 @@ class Instructor extends BaseController
         if ($enrollment['course_id'] != $courseId) {
             session()->setFlashdata('error', 'Invalid enrollment.');
             return redirect()->back();
+        }
+
+        // Check for time conflict: student cannot be enrolled in courses with same time, same semester, same term
+        if (!empty($course['time'])) {
+            $studentId = $enrollment['user_id'];
+            
+            // Get all approved enrollments for this student in the same semester and term with the same time
+            $conflictingEnrollments = $enrollmentModel
+                ->select('enrollments.*, courses.time, courses.title as course_title')
+                ->join('courses', 'courses.id = enrollments.course_id')
+                ->where('enrollments.user_id', $studentId)
+                ->where('enrollments.school_year_id', $course['school_year_id'])
+                ->where('enrollments.semester', $course['semester'])
+                ->where('enrollments.term', $course['term'])
+                ->where('courses.time', $course['time'])
+                ->where('courses.time IS NOT NULL')
+                ->where('courses.time !=', '')
+                ->where('enrollments.id !=', $enrollmentId); // Exclude current enrollment
+            
+            // Only check approved enrollments
+            try {
+                $db = \Config\Database::connect();
+                $columns = $db->getFieldNames('enrollments');
+                if (in_array('status', $columns)) {
+                    $conflictingEnrollments->where('enrollments.status', 'approved');
+                }
+            } catch (\Exception $e) {
+                // Status column doesn't exist, continue
+            }
+            
+            $conflict = $conflictingEnrollments->first();
+            
+            if ($conflict) {
+                session()->setFlashdata('error', 'Cannot approve enrollment: The student is already enrolled in "' . esc($conflict['course_title']) . '" at the same time (' . esc($course['time']) . ') for the same semester and term.');
+                log_message('info', 'Time conflict detected on approval: Student ' . $studentId . ' already enrolled in course ' . $conflict['course_id'] . ' at time ' . $course['time']);
+                return redirect()->back();
+            }
         }
 
         try {

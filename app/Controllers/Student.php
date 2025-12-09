@@ -64,7 +64,7 @@ class Student extends BaseController
                 // Get available courses for current term with instructor name
                 // Only show courses that have an assigned instructor
                 $allAvailableCourses = $courseModel
-                    ->select('courses.*, users.name as instructor_name')
+                    ->select('courses.*, courses.time, courses.units, users.name as instructor_name')
                     ->join('users', 'users.id = courses.instructor_id', 'inner')
                     ->where('courses.school_year_id', $currentPeriod['school_year']['id'])
                     ->where('courses.semester', $currentPeriod['semester']['semester_number'])
@@ -112,16 +112,45 @@ class Student extends BaseController
                     // Status column doesn't exist
                 }
 
-                // Get approved enrollments (for enrolled courses display)
+                // Get ALL approved enrollments (across all terms, not just current term)
                 $approvedEnrollments = [];
                 if ($hasStatusColumn) {
-                    $approvedEnrollments = $enrollmentModel
+                    $allApprovedEnrollments = $enrollmentModel
                         ->where('user_id', $userId)
-                        ->where('school_year_id', $currentPeriod['school_year']['id'])
-                        ->where('semester', $currentPeriod['semester']['semester_number'])
-                        ->where('term', $currentPeriod['term']['term_number'])
                         ->where('status', 'approved')
                         ->findAll();
+                    
+                    // Filter out expired courses
+                    $today = date('Y-m-d');
+                    $termModel = new TermModel();
+                    $semesterModel = new SemesterModel();
+                    
+                    foreach ($allApprovedEnrollments as $enrollment) {
+                        // Get course to check term end date
+                        $course = $courseModel->find($enrollment['course_id']);
+                        
+                        if ($course && !empty($course['school_year_id']) && !empty($course['semester']) && !empty($course['term'])) {
+                            $semester = $semesterModel
+                                ->where('school_year_id', $course['school_year_id'])
+                                ->where('semester_number', $course['semester'])
+                                ->first();
+                            
+                            if ($semester) {
+                                $term = $termModel
+                                    ->where('semester_id', $semester['id'])
+                                    ->where('term_number', $course['term'])
+                                    ->first();
+                                
+                                // Only include if term exists and end date hasn't passed
+                                if ($term && $term['end_date'] >= $today) {
+                                    $approvedEnrollments[] = $enrollment;
+                                }
+                            }
+                        } else {
+                            // If course doesn't have academic structure, include it
+                            $approvedEnrollments[] = $enrollment;
+                        }
+                    }
                 }
 
                 // Get pending enrollments (for pending display) and filter out expired courses
@@ -323,6 +352,40 @@ class Student extends BaseController
         if (!$course) {
             session()->setFlashdata('error', 'Course not available. This course does not have an assigned instructor yet.');
             return redirect()->to('/student/enroll');
+        }
+
+        // Check for time conflict: student cannot be enrolled in courses with same time, same semester, same term
+        if (!empty($course['time'])) {
+            // Get all approved enrollments for this student in the same semester and term with the same time
+            $conflictingEnrollments = $enrollmentModel
+                ->select('enrollments.*, courses.time, courses.title as course_title')
+                ->join('courses', 'courses.id = enrollments.course_id')
+                ->where('enrollments.user_id', $userId)
+                ->where('enrollments.school_year_id', $schoolYearId)
+                ->where('enrollments.semester', $semester)
+                ->where('enrollments.term', $term)
+                ->where('courses.time', $course['time'])
+                ->where('courses.time IS NOT NULL')
+                ->where('courses.time !=', '');
+            
+            // Only check approved enrollments
+            try {
+                $db = \Config\Database::connect();
+                $columns = $db->getFieldNames('enrollments');
+                if (in_array('status', $columns)) {
+                    $conflictingEnrollments->where('enrollments.status', 'approved');
+                }
+            } catch (\Exception $e) {
+                // Status column doesn't exist, continue
+            }
+            
+            $conflict = $conflictingEnrollments->first();
+            
+            if ($conflict) {
+                session()->setFlashdata('error', 'Cannot enroll: You are already enrolled in "' . esc($conflict['course_title']) . '" at the same time (' . esc($course['time']) . ') for the same semester and term.');
+                log_message('info', 'Time conflict detected on self-enroll: Student ' . $userId . ' already enrolled in course ' . $conflict['course_id'] . ' at time ' . $course['time']);
+                return redirect()->to('/student/enroll');
+            }
         }
 
         // Check if already enrolled (any status)
