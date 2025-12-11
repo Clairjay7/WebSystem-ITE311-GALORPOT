@@ -144,6 +144,20 @@
             <h5 class="mb-0"><i class="fas fa-list"></i> All Courses</h5>
         </div>
         <div class="card-body">
+            <!-- Search Form -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <form id="searchForm" class="d-flex">
+                        <div class="input-group">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search courses..." name="search_term">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -160,10 +174,10 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="coursesContainer">
                         <?php if (!empty($courses)): ?>
                             <?php foreach ($courses as $course): ?>
-                                <tr>
+                                <tr class="course-row" data-title="<?= strtolower(esc($course['title'])) ?>" data-description="<?= strtolower(esc($course['description'] ?? '')) ?>">
                                     <td><?= $course['id'] ?></td>
                                     <td><strong><?= esc($course['control_number'] ?? 'N/A') ?></strong></td>
                                     <td><?= esc($course['title']) ?></td>
@@ -174,13 +188,16 @@
                                     <td>Semester <?= $course['semester'] ?? 'N/A' ?></td>
                                     <td>Term <?= $course['term'] ?? 'N/A' ?></td>
                                     <td>
-                                        <button class="btn btn-sm btn-warning" onclick="editCourse(<?= htmlspecialchars(json_encode($course)) ?>)">
+                                        <a href="<?= site_url('/materials/upload/' . $course['id']) ?>" class="btn btn-sm btn-primary" title="Manage Materials">
+                                            <i class="fas fa-file-alt"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-warning" onclick="editCourse(<?= htmlspecialchars(json_encode($course)) ?>)" title="Edit Course">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <form method="post" action="<?= site_url('/admin/courses/delete') ?>" class="d-inline" onsubmit="return confirm('Are you sure?')">
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="id" value="<?= $course['id'] ?>">
-                                            <button type="submit" class="btn btn-sm btn-danger">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Delete Course">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -651,6 +668,86 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorMsg.textContent = 'ERROR: Control Number must have exactly 4 digits only.';
                 errorMsg.style.display = 'block';
             }
+        });
+    });
+    
+    // Client-side filtering with jQuery
+    $(document).ready(function() {
+        // Instant client-side filtering
+        $('#searchInput').on('keyup', function() {
+            const searchValue = $(this).val().toLowerCase();
+            $('.course-row').each(function() {
+                const title = $(this).data('title') || '';
+                const description = $(this).data('description') || '';
+                const text = title + ' ' + description;
+                
+                if (text.includes(searchValue)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+            
+            // Show "No results" message if all rows are hidden
+            const visibleRows = $('.course-row:visible').length;
+            if (visibleRows === 0 && searchValue.length > 0) {
+                if ($('#noResultsRow').length === 0) {
+                    $('#coursesContainer').append('<tr id="noResultsRow"><td colspan="10" class="text-center text-muted">No courses found matching your search.</td></tr>');
+                }
+            } else {
+                $('#noResultsRow').remove();
+            }
+        });
+        
+        // Server-side search with AJAX
+        $('#searchForm').on('submit', function(e) {
+            e.preventDefault();
+            const searchTerm = $('#searchInput').val();
+            
+            $.get('<?= site_url('/courses/search') ?>', { search_term: searchTerm })
+                .done(function(data) {
+                    $('#coursesContainer').empty();
+                    
+                    if (data.length > 0) {
+                        $.each(data, function(index, course) {
+                            // Escape course data for use in HTML
+                            const courseJson = JSON.stringify(course).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                            const row = $('<tr>')
+                                .addClass('course-row')
+                                .attr('data-title', (course.title || '').toLowerCase())
+                                .attr('data-description', (course.description || '').toLowerCase())
+                                .html(
+                                    '<td>' + (course.id || '') + '</td>' +
+                                    '<td><strong>' + (course.control_number || 'N/A') + '</strong></td>' +
+                                    '<td>' + (course.title || '') + '</td>' +
+                                    '<td><span class="badge bg-info">' + (course.units || '0') + ' units</span></td>' +
+                                    '<td>' + (course.time || 'N/A') + '</td>' +
+                                    '<td>' + (course.instructor_name || 'Not Assigned') + '</td>' +
+                                    '<td>' + (course.school_year || 'N/A') + '</td>' +
+                                    '<td>Semester ' + (course.semester || 'N/A') + '</td>' +
+                                    '<td>Term ' + (course.term || 'N/A') + '</td>' +
+                                    '<td>' +
+                                    '<a href="<?= site_url('/materials/upload') ?>/' + course.id + '" class="btn btn-sm btn-primary" title="Manage Materials">' +
+                                    '<i class="fas fa-file-alt"></i></a> ' +
+                                    '<button class="btn btn-sm btn-warning" onclick="editCourse(' + courseJson + ')" title="Edit Course">' +
+                                    '<i class="fas fa-edit"></i></button> ' +
+                                    '<form method="post" action="<?= site_url('/admin/courses/delete') ?>" class="d-inline" onsubmit="return confirm(\'Are you sure?\')">' +
+                                    '<?= csrf_field() ?>' +
+                                    '<input type="hidden" name="id" value="' + course.id + '">' +
+                                    '<button type="submit" class="btn btn-sm btn-danger" title="Delete Course">' +
+                                    '<i class="fas fa-trash"></i></button>' +
+                                    '</form>' +
+                                    '</td>'
+                                );
+                            $('#coursesContainer').append(row);
+                        });
+                    } else {
+                        $('#coursesContainer').html('<tr><td colspan="10" class="text-center text-muted">No courses found matching your search.</td></tr>');
+                    }
+                })
+                .fail(function() {
+                    $('#coursesContainer').html('<tr><td colspan="10" class="text-center text-danger">Error loading search results. Please try again.</td></tr>');
+                });
         });
     });
 });

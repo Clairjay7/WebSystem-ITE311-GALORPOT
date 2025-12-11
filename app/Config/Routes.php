@@ -36,6 +36,8 @@ $routes->get('/seed-defaults', 'Auth::seedDefaults');
 // Admin routes
 $routes->get('/admin/dashboard', 'Admin::dashboard');
 $routes->get('/admin/users', 'Admin::users');
+$routes->get('/admin/users/search', 'Admin::searchUsers');
+$routes->post('/admin/users/search', 'Admin::searchUsers');
 $routes->post('/admin/users/create', 'Admin::createUser');
 $routes->get('/admin/users/test', 'Admin::testCreateUser'); // TEST ROUTE
 $routes->post('/admin/users/update', 'Admin::updateUser');
@@ -59,6 +61,12 @@ $routes->post('/admin/courses/create', 'Admin::createCourse');
 $routes->post('/admin/courses/update', 'Admin::updateCourse');
 $routes->post('/admin/courses/delete', 'Admin::deleteCourse');
 $routes->post('/admin/courses/restore', 'Admin::restoreCourse');
+$routes->get('/admin/course/(:num)/upload', 'Materials::upload/$1');
+$routes->post('/admin/course/(:num)/upload', 'Materials::upload/$1');
+
+// Course search routes
+$routes->get('/courses/search', 'Course::search');
+$routes->post('/courses/search', 'Course::search');
 
 // Enrollment routes
 $routes->get('/admin/enrollments', 'Admin::enrollments');
@@ -87,3 +95,14 @@ $routes->post('/instructor/enroll-student', 'Instructor::enrollStudent');
 $routes->post('/instructor/unenroll-student', 'Instructor::unenrollStudent');
 $routes->post('/instructor/approve-enrollment', 'Instructor::approveEnrollment');
 $routes->post('/instructor/reject-enrollment', 'Instructor::rejectEnrollment');
+
+// Materials routes
+$routes->get('/materials/upload/(:num)', 'Materials::upload/$1');
+$routes->post('/materials/upload/(:num)', 'Materials::upload/$1');
+$routes->get('/materials/delete/(:num)', 'Materials::delete/$1');
+$routes->get('/materials/restore/(:num)', 'Materials::restore/$1');
+$routes->get('/materials/download/(:num)', 'Materials::download/$1');
+
+// Notification routes
+$routes->get('/notifications', 'Notifications::get');
+$routes->post('/notifications/mark_read/(:num)', 'Notifications::mark_as_read/$1');

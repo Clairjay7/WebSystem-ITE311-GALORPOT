@@ -7,6 +7,8 @@ use App\Models\EnrollmentModel;
 use App\Models\SchoolYearModel;
 use App\Models\TermModel;
 use App\Models\SemesterModel;
+use App\Models\NotificationModel;
+use App\Models\UserModel;
 
 class Student extends BaseController
 {
@@ -60,10 +62,81 @@ class Student extends BaseController
             if (!$currentPeriod) {
                 $activeSchoolYear = $schoolYearModel->getActiveSchoolYear();
                 $data['active_school_year'] = $activeSchoolYear;
+                
+                // Get available courses for active school year (even without active term)
+                if ($activeSchoolYear) {
+                    $teacherAssignmentModel = new \App\Models\TeacherAssignmentModel();
+                    
+                    // Get courses with direct instructor assignment for this school year
+                    $coursesWithDirectInstructor = $courseModel
+                        ->select('courses.*, courses.time, courses.units, users.name as instructor_name')
+                        ->join('users', 'users.id = courses.instructor_id', 'inner')
+                        ->where('courses.school_year_id', $activeSchoolYear['id'])
+                        ->where('courses.instructor_id IS NOT NULL')
+                        ->findAll();
+                    
+                    // Get courses with instructor assigned via teacher_assignments table for this school year
+                    $teacherAssignments = $teacherAssignmentModel
+                        ->select('teacher_assignments.course_id, teacher_assignments.school_year_id, teacher_assignments.semester, teacher_assignments.term, users.name as instructor_name')
+                        ->join('users', 'users.id = teacher_assignments.teacher_id')
+                        ->where('teacher_assignments.school_year_id', $activeSchoolYear['id'])
+                        ->findAll();
+                    
+                    // Get course IDs from teacher_assignments
+                    $assignedCourseIds = array_column($teacherAssignments, 'course_id');
+                    $assignedCoursesMap = [];
+                    foreach ($teacherAssignments as $assignment) {
+                        $assignedCoursesMap[$assignment['course_id']] = $assignment['instructor_name'];
+                    }
+                    
+                    // Get courses from teacher_assignments
+                    $coursesFromAssignments = [];
+                    if (!empty($assignedCourseIds)) {
+                        $coursesFromAssignments = $courseModel
+                            ->select('courses.*, courses.time, courses.units')
+                            ->whereIn('courses.id', $assignedCourseIds)
+                            ->where('courses.school_year_id', $activeSchoolYear['id'])
+                            ->findAll();
+                        
+                        // Add instructor name from teacher_assignments
+                        foreach ($coursesFromAssignments as &$course) {
+                            $course['instructor_name'] = $assignedCoursesMap[$course['id']] ?? 'Not assigned';
+                        }
+                    }
+                    
+                    // Combine both sets of courses, avoiding duplicates
+                    $allAvailableCourses = [];
+                    $addedCourseIds = [];
+                    
+                    // Add courses with direct instructor
+                    foreach ($coursesWithDirectInstructor as $course) {
+                        $allAvailableCourses[] = $course;
+                        $addedCourseIds[] = $course['id'];
+                    }
+                    
+                    // Add courses from teacher_assignments that aren't already added
+                    foreach ($coursesFromAssignments as $course) {
+                        if (!in_array($course['id'], $addedCourseIds)) {
+                            $allAvailableCourses[] = $course;
+                            $addedCourseIds[] = $course['id'];
+                        }
+                    }
+                    
+                    // Filter to only include courses with assigned instructors
+                    $data['available_courses'] = [];
+                    foreach ($allAvailableCourses as $course) {
+                        if (!empty($course['instructor_name']) && $course['instructor_name'] !== 'Not assigned') {
+                            $data['available_courses'][] = $course;
+                        }
+                    }
+                }
             } else {
                 // Get available courses for current term with instructor name
-                // Only show courses that have an assigned instructor
-                $allAvailableCourses = $courseModel
+                // Include courses with instructors assigned via courses.instructor_id OR teacher_assignments
+                $teacherAssignmentModel = new \App\Models\TeacherAssignmentModel();
+                
+                // Get courses with direct instructor assignment
+                $coursesWithDirectInstructor = $courseModel
                     ->select('courses.*, courses.time, courses.units, users.name as instructor_name')
                     ->join('users', 'users.id = courses.instructor_id', 'inner')
                     ->where('courses.school_year_id', $currentPeriod['school_year']['id'])
@@ -72,6 +145,57 @@ class Student extends BaseController
                     ->where('courses.instructor_id IS NOT NULL')
                     ->findAll();
                 
+                // Get courses with instructor assigned via teacher_assignments table
+                $teacherAssignments = $teacherAssignmentModel
+                    ->select('teacher_assignments.course_id, teacher_assignments.school_year_id, teacher_assignments.semester, teacher_assignments.term, users.name as instructor_name')
+                    ->join('users', 'users.id = teacher_assignments.teacher_id')
+                    ->where('teacher_assignments.school_year_id', $currentPeriod['school_year']['id'])
+                    ->where('teacher_assignments.semester', $currentPeriod['semester']['semester_number'])
+                    ->where('teacher_assignments.term', $currentPeriod['term']['term_number'])
+                    ->findAll();
+                
+                // Get course IDs from teacher_assignments
+                $assignedCourseIds = array_column($teacherAssignments, 'course_id');
+                $assignedCoursesMap = [];
+                foreach ($teacherAssignments as $assignment) {
+                    $assignedCoursesMap[$assignment['course_id']] = $assignment['instructor_name'];
+                }
+                
+                // Get courses from teacher_assignments
+                $coursesFromAssignments = [];
+                if (!empty($assignedCourseIds)) {
+                    $coursesFromAssignments = $courseModel
+                        ->select('courses.*, courses.time, courses.units')
+                        ->whereIn('courses.id', $assignedCourseIds)
+                        ->where('courses.school_year_id', $currentPeriod['school_year']['id'])
+                        ->where('courses.semester', $currentPeriod['semester']['semester_number'])
+                        ->where('courses.term', $currentPeriod['term']['term_number'])
+                        ->findAll();
+                    
+                    // Add instructor name from teacher_assignments
+                    foreach ($coursesFromAssignments as &$course) {
+                        $course['instructor_name'] = $assignedCoursesMap[$course['id']] ?? 'Not assigned';
+                    }
+                }
+                
+                // Combine both sets of courses, avoiding duplicates
+                $allAvailableCourses = [];
+                $addedCourseIds = [];
+                
+                // Add courses with direct instructor
+                foreach ($coursesWithDirectInstructor as $course) {
+                    $allAvailableCourses[] = $course;
+                    $addedCourseIds[] = $course['id'];
+                }
+                
+                // Add courses from teacher_assignments that aren't already added
+                foreach ($coursesFromAssignments as $course) {
+                    if (!in_array($course['id'], $addedCourseIds)) {
+                        $allAvailableCourses[] = $course;
+                        $addedCourseIds[] = $course['id'];
+                    }
+                }
+                
                 // Filter out expired courses (where term end date has passed)
                 $today = date('Y-m-d');
                 $termModel = new TermModel();
@@ -79,8 +203,9 @@ class Student extends BaseController
                 $data['available_courses'] = [];
                 
                 foreach ($allAvailableCourses as $course) {
-                    // Only include courses with assigned instructors
-                    if (empty($course['instructor_id'])) {
+                    // Include courses that have an instructor (either via instructor_id or teacher_assignments)
+                    // Check if course has instructor_name (from either source)
+                    if (empty($course['instructor_name']) || $course['instructor_name'] === 'Not assigned') {
                         continue;
                     }
                     
@@ -488,6 +613,32 @@ class Student extends BaseController
         }
 
         if ($enrollmentModel->insert($enrollmentData)) {
+            // Create notification for the student
+            $notificationModel = new NotificationModel();
+            $userModel = new UserModel();
+            
+            $message = 'You have enrolled in ' . esc($course['title']) . '. Waiting for instructor approval.';
+            $notificationModel->createNotification($userId, $message);
+            
+            // Get student name for notifications
+            $student = $userModel->find($userId);
+            $studentName = $student ? $student['name'] : 'A student';
+            
+            // Create notification for the instructor
+            if (!empty($course['instructor_id'])) {
+                $instructorMessage = $studentName . ' has enrolled in ' . esc($course['title']) . ' and is waiting for your approval.';
+                $notificationModel->createNotification($course['instructor_id'], $instructorMessage);
+            }
+            
+            // Create notification for all admins
+            $admins = $userModel->getAdmins();
+            if (!empty($admins)) {
+                $adminMessage = $studentName . ' has enrolled in ' . esc($course['title']) . ' and is waiting for instructor approval.';
+                foreach ($admins as $admin) {
+                    $notificationModel->createNotification($admin['id'], $adminMessage);
+                }
+            }
+            
             session()->setFlashdata('success', 'Enrollment request submitted for ' . esc($course['title']) . '! Waiting for instructor approval.');
         } else {
             session()->setFlashdata('error', 'Failed to submit enrollment request. Please try again.');
@@ -634,19 +785,31 @@ class Student extends BaseController
                 return redirect()->to('/dashboard');
             }
 
-            // Verify that the student is enrolled in this course
+            // Check if the student is enrolled in this course (for preview mode, allow viewing even if not enrolled)
             $enrollment = $enrollmentModel
                 ->where('user_id', $userId)
-                ->where('course_id', $courseId)
-                ->where('school_year_id', $course['school_year_id'])
-                ->where('semester', $course['semester'])
-                ->where('term', $course['term'])
-                ->first();
-
-            if (!$enrollment) {
-                session()->setFlashdata('error', 'You are not enrolled in this course.');
-                return redirect()->to('/dashboard');
+                ->where('course_id', $courseId);
+            
+            // Check academic structure if course has it
+            if (!empty($course['school_year_id']) && !empty($course['semester']) && !empty($course['term'])) {
+                $enrollment->where('school_year_id', $course['school_year_id'])
+                    ->where('semester', $course['semester'])
+                    ->where('term', $course['term']);
             }
+            
+            // Check status if column exists
+            try {
+                $db = \Config\Database::connect();
+                $columns = $db->getFieldNames('enrollments');
+                if (in_array('status', $columns)) {
+                    $enrollment->where('status', 'approved');
+                }
+            } catch (\Exception $e) {
+                // Status column might not exist
+            }
+            
+            $enrollment = $enrollment->first();
+            $isEnrolled = $enrollment !== null;
 
             // Get instructor name
             $userModel = new \App\Models\UserModel();
@@ -681,6 +844,13 @@ class Student extends BaseController
                 }
             }
 
+            // Get course materials (only if enrolled)
+            $materialModel = new \App\Models\MaterialModel();
+            $materials = [];
+            if ($isEnrolled) {
+                $materials = $materialModel->getMaterialsByCourse($courseId);
+            }
+
             $data = [
                 'course' => $course,
                 'enrollment' => $enrollment,
@@ -688,6 +858,8 @@ class Student extends BaseController
                 'school_year' => $schoolYear,
                 'term_start_date' => $termStartDate,
                 'term_end_date' => $termEndDate,
+                'materials' => $materials,
+                'is_enrolled' => $isEnrolled,
             ];
 
             return view('student/view_course', $data);

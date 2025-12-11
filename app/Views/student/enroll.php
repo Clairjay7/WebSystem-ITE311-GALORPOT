@@ -89,6 +89,20 @@
                 <h5 class="mb-0"><i class="fas fa-check-circle"></i> My Enrolled Courses (Approved)</h5>
             </div>
             <div class="card-body">
+                <!-- Search Form -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <form id="enrolledCoursesSearchForm" class="d-flex">
+                            <div class="input-group">
+                                <input type="text" id="enrolledCoursesSearchInput" class="form-control" placeholder="Search by course title, description, or instructor..." name="search_term">
+                                <button class="btn btn-outline-primary" type="submit">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -102,9 +116,9 @@
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="enrolledCoursesContainer">
                             <?php foreach ($enrolled_courses as $course): ?>
-                                <tr>
+                                <tr class="enrolled-course-row" data-title="<?= strtolower(esc($course['title'])) ?>" data-description="<?= strtolower(esc($course['description'] ?? '')) ?>" data-instructor="<?= strtolower(esc($course['instructor_name'] ?? '')) ?>">
                                     <td><strong><?= esc($course['title']) ?></strong></td>
                                     <td><?= esc($course['description'] ?? 'N/A') ?></td>
                                     <td><span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span></td>
@@ -216,7 +230,7 @@
     <?php endif; ?>
 
     <!-- Available Courses -->
-    <?php if (isset($current_period) && $current_period): ?>
+    <?php if ((isset($current_period) && $current_period) || (isset($active_school_year) && $active_school_year && isset($available_courses) && !empty($available_courses))): ?>
         <?php if (empty($available_courses)): ?>
             <div class="card">
                 <div class="card-body text-center py-5">
@@ -232,45 +246,66 @@
                     <h5 class="mb-0"><i class="fas fa-list"></i> Available Courses for Enrollment</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <?php foreach ($available_courses as $course): ?>
-                            <div class="col-md-6">
-                                <div class="card border-primary h-100">
-                                    <div class="card-body">
-                                        <h5 class="card-title text-primary"><?= esc($course['title']) ?></h5>
-                                        <p class="card-text"><?= esc($course['description'] ?? 'No description available.') ?></p>
-                                        <p class="card-text mb-2">
-                                            <small class="text-muted">
-                                                <i class="fas fa-chalkboard-teacher"></i> 
-                                                <strong>Instructor:</strong> <?= esc($course['instructor_name'] ?? 'Not assigned') ?>
-                                            </small>
-                                        </p>
-                                        <p class="card-text mb-2">
-                                            <small class="text-muted">
-                                                <i class="fas fa-clock"></i> 
-                                                <strong>Time:</strong> <?= esc($course['time'] ?? 'N/A') ?>
-                                            </small>
-                                        </p>
-                                        <p class="card-text mb-2">
-                                            <small class="text-muted">
-                                                <i class="fas fa-book"></i> 
-                                                <strong>Units:</strong> <span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span>
-                                            </small>
-                                        </p>
-                                        <form method="post" action="<?= site_url('/student/enroll/self-enroll') ?>" class="d-inline">
-                                            <?= csrf_field() ?>
-                                            <input type="hidden" name="course_id" value="<?= $course['id'] ?>">
-                                            <input type="hidden" name="school_year_id" value="<?= $current_period['school_year']['id'] ?>">
-                                            <input type="hidden" name="semester" value="<?= $current_period['semester']['semester_number'] ?>">
-                                            <input type="hidden" name="term" value="<?= $current_period['term']['term_number'] ?>">
-                                            <button type="submit" class="btn btn-primary enroll-btn" data-course-id="<?= $course['id'] ?>">
-                                                <i class="fas fa-user-plus"></i> Enroll Now
-                                            </button>
-                                        </form>
+                    <!-- Search Form -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <form id="availableCoursesSearchForm" class="d-flex">
+                                <div class="input-group">
+                                    <input type="text" id="availableCoursesSearchInput" class="form-control" placeholder="Search by course title, description, or instructor..." name="search_term">
+                                    <button class="btn btn-outline-primary" type="submit">
+                                        <i class="fas fa-search"></i> Search
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="availableCoursesContainer">
+                        <div class="row g-3">
+                            <?php foreach ($available_courses as $course): ?>
+                                <div class="col-md-6 available-course-card" data-title="<?= strtolower(esc($course['title'])) ?>" data-description="<?= strtolower(esc($course['description'] ?? '')) ?>" data-instructor="<?= strtolower(esc($course['instructor_name'] ?? '')) ?>">
+                                    <div class="card border-primary h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-primary"><?= esc($course['title']) ?></h5>
+                                            <p class="card-text"><?= esc($course['description'] ?? 'No description available.') ?></p>
+                                            <p class="card-text mb-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-chalkboard-teacher"></i> 
+                                                    <strong>Instructor:</strong> <?= esc($course['instructor_name'] ?? 'Not assigned') ?>
+                                                </small>
+                                            </p>
+                                            <p class="card-text mb-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock"></i> 
+                                                    <strong>Time:</strong> <?= esc($course['time'] ?? 'N/A') ?>
+                                                </small>
+                                            </p>
+                                            <p class="card-text mb-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-book"></i> 
+                                                    <strong>Units:</strong> <span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span>
+                                                </small>
+                                            </p>
+                                            <div class="d-flex gap-2">
+                                                <a href="<?= site_url('/student/course/' . $course['id']) ?>" class="btn btn-outline-primary">
+                                                    <i class="fas fa-eye"></i> View Course
+                                                </a>
+                                                <form method="post" action="<?= site_url('/student/enroll/self-enroll') ?>" class="d-inline">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="course_id" value="<?= $course['id'] ?>">
+                                                    <input type="hidden" name="school_year_id" value="<?= isset($current_period) && isset($current_period['school_year']) ? $current_period['school_year']['id'] : (isset($active_school_year) ? $active_school_year['id'] : '') ?>">
+                                                    <input type="hidden" name="semester" value="<?= isset($current_period) && isset($current_period['semester']) ? $current_period['semester']['semester_number'] : (isset($course['semester']) ? $course['semester'] : '') ?>">
+                                                    <input type="hidden" name="term" value="<?= isset($current_period) && isset($current_period['term']) ? $current_period['term']['term_number'] : (isset($course['term']) ? $course['term'] : '') ?>">
+                                                <button type="submit" class="btn btn-primary enroll-btn" data-course-id="<?= $course['id'] ?>">
+                                                    <i class="fas fa-user-plus"></i> Enroll in Course
+                                                </button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -295,6 +330,153 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+
+    // Enrolled Courses search functionality
+    <?php if (isset($enrolled_courses) && !empty($enrolled_courses)): ?>
+    const originalEnrolledCourses = $('#enrolledCoursesContainer').html();
+    
+    $('#enrolledCoursesSearchInput').on('keyup', function() {
+        const searchValue = $(this).val().toLowerCase().trim();
+        
+        if (searchValue === '') {
+            $('#enrolledCoursesContainer').html(originalEnrolledCourses);
+            return;
+        }
+        
+        let visibleCount = 0;
+        $('.enrolled-course-row').each(function() {
+            const title = $(this).data('title') || '';
+            const description = $(this).data('description') || '';
+            const instructor = $(this).data('instructor') || '';
+            const text = (title + ' ' + description + ' ' + instructor).toLowerCase();
+            
+            if (text.includes(searchValue)) {
+                $(this).show();
+                visibleCount++;
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        if (visibleCount === 0) {
+            if ($('#noEnrolledResultsRow').length === 0) {
+                $('#enrolledCoursesContainer').append('<tr id="noEnrolledResultsRow"><td colspan="7" class="text-center text-muted">No courses found matching your search.</td></tr>');
+            }
+        } else {
+            $('#noEnrolledResultsRow').remove();
+        }
+    });
+    
+    $('#enrolledCoursesSearchForm').on('submit', function(e) {
+        e.preventDefault();
+        $('#enrolledCoursesSearchInput').trigger('keyup');
+    });
+    <?php endif; ?>
+
+    // Available Courses search functionality
+    <?php if (isset($available_courses) && !empty($available_courses)): ?>
+    const originalAvailableCourses = $('#availableCoursesContainer').html();
+    
+    $('#availableCoursesSearchInput').on('keyup', function() {
+        const searchValue = $(this).val().toLowerCase().trim();
+        
+        if (searchValue === '') {
+            $('#availableCoursesContainer').html(originalAvailableCourses);
+            return;
+        }
+        
+        let visibleCount = 0;
+        $('.available-course-card').each(function() {
+            const title = $(this).data('title') || '';
+            const description = $(this).data('description') || '';
+            const instructor = $(this).data('instructor') || '';
+            const text = (title + ' ' + description + ' ' + instructor).toLowerCase();
+            
+            if (text.includes(searchValue)) {
+                $(this).show();
+                visibleCount++;
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        if (visibleCount === 0) {
+            if ($('#noAvailableResults').length === 0) {
+                $('#availableCoursesContainer').html('<div id="noAvailableResults" class="col-12 text-center py-5"><i class="fas fa-search fa-3x text-muted mb-3"></i><h5 class="text-muted">No courses found matching your search.</h5></div>');
+            }
+        } else {
+            $('#noAvailableResults').remove();
+        }
+    });
+    
+    // Server-side search for available courses
+    $('#availableCoursesSearchForm').on('submit', function(e) {
+        e.preventDefault();
+        const searchTerm = $('#availableCoursesSearchInput').val().trim();
+        
+        if (!searchTerm) {
+            $('#availableCoursesContainer').html(originalAvailableCourses);
+            return;
+        }
+        
+        $('#availableCoursesContainer').html('<div class="col-12 text-center py-5"><i class="fas fa-spinner fa-spin fa-3x"></i><p class="mt-3">Searching...</p></div>');
+        
+        $.ajax({
+            url: '<?= site_url('/courses/search') ?>',
+            method: 'GET',
+            data: { 
+                search_term: searchTerm,
+                context: 'student'
+            },
+            dataType: 'json',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .done(function(response) {
+            $('#availableCoursesContainer').empty();
+            const courses = response.courses || response || [];
+            
+            if (courses.length > 0) {
+                const row = $('<div>').addClass('row g-3');
+                $.each(courses, function(index, course) {
+                    const courseCard = $('<div>')
+                        .addClass('col-md-6 available-course-card')
+                        .attr('data-title', (course.title || '').toLowerCase())
+                        .attr('data-description', (course.description || '').toLowerCase())
+                        .attr('data-instructor', (course.instructor_name || '').toLowerCase())
+                        .html(
+                            '<div class="card border-primary h-100">' +
+                            '<div class="card-body">' +
+                            '<h5 class="card-title text-primary">' + (course.title || '') + '</h5>' +
+                            '<p class="card-text">' + (course.description || 'No description available.') + '</p>' +
+                            '<p class="card-text mb-2"><small class="text-muted"><i class="fas fa-chalkboard-teacher"></i> <strong>Instructor:</strong> ' + (course.instructor_name || 'Not assigned') + '</small></p>' +
+                            '<p class="card-text mb-2"><small class="text-muted"><i class="fas fa-clock"></i> <strong>Time:</strong> ' + (course.time || 'N/A') + '</small></p>' +
+                            '<p class="card-text mb-2"><small class="text-muted"><i class="fas fa-book"></i> <strong>Units:</strong> <span class="badge bg-info">' + (course.units || '0') + ' units</span></small></p>' +
+                            '<div class="d-flex gap-2">' +
+                            '<a href="<?= site_url('/student/course/') ?>' + course.id + '" class="btn btn-outline-primary"><i class="fas fa-eye"></i> View Course</a>' +
+                            '<form method="post" action="<?= site_url('/student/enroll/self-enroll') ?>" class="d-inline">' +
+                            '<?= csrf_field() ?>' +
+                            '<input type="hidden" name="course_id" value="' + course.id + '">' +
+                            '<input type="hidden" name="school_year_id" value="<?= isset($current_period) && isset($current_period['school_year']) ? $current_period['school_year']['id'] : '' ?>">' +
+                            '<input type="hidden" name="semester" value="<?= isset($current_period) && isset($current_period['semester']) ? $current_period['semester']['semester_number'] : '' ?>">' +
+                            '<input type="hidden" name="term" value="<?= isset($current_period) && isset($current_period['term']) ? $current_period['term']['term_number'] : '' ?>">' +
+                            '<button type="submit" class="btn btn-primary enroll-btn" data-course-id="' + course.id + '"><i class="fas fa-user-plus"></i> Enroll in Course</button>' +
+                            '</form>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>'
+                        );
+                    row.append(courseCard);
+                });
+                $('#availableCoursesContainer').html(row);
+            } else {
+                $('#availableCoursesContainer').html('<div class="col-12 text-center py-5"><i class="fas fa-search fa-3x text-muted mb-3"></i><h5 class="text-muted">No courses found matching your search.</h5></div>');
+            }
+        })
+        .fail(function() {
+            $('#availableCoursesContainer').html('<div class="col-12 text-center py-5"><div class="text-danger">Error loading search results. Please try again.</div></div>');
+        });
+    });
+    <?php endif; ?>
 });
 </script>
 

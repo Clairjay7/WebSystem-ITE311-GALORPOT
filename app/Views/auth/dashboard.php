@@ -293,6 +293,20 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 					<h5 class="mb-0"><i class="fas fa-check-circle"></i> My Enrolled Courses (Approved)</h5>
 				</div>
 				<div class="card-body">
+					<!-- Search Form -->
+					<div class="row mb-4">
+						<div class="col-md-6">
+							<form id="enrollmentsSearchForm" class="d-flex">
+								<div class="input-group">
+									<input type="text" id="enrollmentsSearchInput" class="form-control" placeholder="Search by course title or description..." name="search_term">
+									<button class="btn btn-outline-primary" type="submit">
+										<i class="fas fa-search"></i> Search
+									</button>
+								</div>
+							</form>
+						</div>
+					</div>
+
 					<div class="table-responsive">
 						<table class="table table-hover">
 							<thead>
@@ -305,9 +319,9 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 									<th>Actions</th>
 								</tr>
 							</thead>
-							<tbody>
+							<tbody id="enrollmentsContainer">
 								<?php foreach ($enrollments as $enrollment): ?>
-									<tr>
+									<tr class="enrollment-row" data-title="<?= strtolower(esc($enrollment['course_title'])) ?>" data-description="<?= strtolower(esc($enrollment['description'] ?? '')) ?>">
 										<td><?= esc($enrollment['course_title']) ?></td>
 										<td><?= esc($enrollment['description'] ?? 'N/A') ?></td>
 										<td><?= esc($enrollment['time'] ?? 'N/A') ?></td>
@@ -340,6 +354,51 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 		if (isset($student_message) && $hasNoEnrollments && $hasNoPending && $hasNoRejected): 
 		?>
 			<div class="alert alert-info mt-4"><?= esc($student_message) ?></div>
+		
+		<script>
+		// Enrolled Courses search functionality in dashboard
+		$(document).ready(function() {
+			<?php if (isset($enrollments) && !empty($enrollments)): ?>
+			const originalEnrollments = $('#enrollmentsContainer').html();
+			
+			$('#enrollmentsSearchInput').on('keyup', function() {
+				const searchValue = $(this).val().toLowerCase().trim();
+				
+				if (searchValue === '') {
+					$('#enrollmentsContainer').html(originalEnrollments);
+					return;
+				}
+				
+				let visibleCount = 0;
+				$('.enrollment-row').each(function() {
+					const title = $(this).data('title') || '';
+					const description = $(this).data('description') || '';
+					const text = (title + ' ' + description).toLowerCase();
+					
+					if (text.includes(searchValue)) {
+						$(this).show();
+						visibleCount++;
+					} else {
+						$(this).hide();
+					}
+				});
+				
+				if (visibleCount === 0) {
+					if ($('#noEnrollmentsRow').length === 0) {
+						$('#enrollmentsContainer').append('<tr id="noEnrollmentsRow"><td colspan="6" class="text-center text-muted">No courses found matching your search.</td></tr>');
+					}
+				} else {
+					$('#noEnrollmentsRow').remove();
+				}
+			});
+			
+			$('#enrollmentsSearchForm').on('submit', function(e) {
+				e.preventDefault();
+				$('#enrollmentsSearchInput').trigger('keyup');
+			});
+			<?php endif; ?>
+		});
+		</script>
 		<?php endif; ?>
 		<div class="row g-3 mt-4">
 			<div class="col-md-4">
@@ -698,6 +757,20 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 						</div>
 					<?php endif; ?>
 
+					<!-- Search Form -->
+					<div class="row mb-4">
+						<div class="col-md-6">
+							<form id="usersSearchForm" class="d-flex">
+								<div class="input-group">
+									<input type="text" id="usersSearchInput" class="form-control" placeholder="Search by name, email, or role..." name="search_term">
+									<button class="btn btn-outline-primary" type="submit">
+										<i class="fas fa-search"></i> Search
+									</button>
+								</div>
+							</form>
+						</div>
+					</div>
+
 					<div class="table-responsive">
 						<table class="table table-hover">
 							<thead>
@@ -710,10 +783,10 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 									<th>Actions</th>
 								</tr>
 							</thead>
-							<tbody>
+							<tbody id="usersContainer">
 								<?php if (!empty($users)): ?>
 									<?php foreach ($users as $user): ?>
-										<tr>
+										<tr class="user-row" data-name="<?= strtolower(esc($user['name'])) ?>" data-email="<?= strtolower(esc($user['email'])) ?>" data-role="<?= strtolower($user['role']) ?>">
 											<td><?= $user['id'] ?></td>
 											<td><?= esc($user['name']) ?></td>
 											<td><?= esc($user['email']) ?></td>
@@ -982,6 +1055,101 @@ $logo = $roleToLogo[$role] ?? $roleToLogo['student'];
 				document.getElementById('restoreUserForm').submit();
 			}
 		}
+
+		// Users search functionality
+		$(document).ready(function() {
+			const originalUsers = $('#usersContainer').html();
+			
+			// Instant client-side filtering
+			$('#usersSearchInput').on('keyup', function() {
+				const searchValue = $(this).val().toLowerCase().trim();
+				
+				if (searchValue === '') {
+					$('#usersContainer').html(originalUsers);
+					return;
+				}
+				
+				let visibleCount = 0;
+				$('.user-row').each(function() {
+					const name = $(this).data('name') || '';
+					const email = $(this).data('email') || '';
+					const role = $(this).data('role') || '';
+					const text = (name + ' ' + email + ' ' + role).toLowerCase();
+					
+					if (text.includes(searchValue)) {
+						$(this).show();
+						visibleCount++;
+					} else {
+						$(this).hide();
+					}
+				});
+				
+				if (visibleCount === 0) {
+					if ($('#noUsersRow').length === 0) {
+						$('#usersContainer').append('<tr id="noUsersRow"><td colspan="6" class="text-center text-muted">No users found matching your search.</td></tr>');
+					}
+				} else {
+					$('#noUsersRow').remove();
+				}
+			});
+			
+			// Server-side search with AJAX
+			$('#usersSearchForm').on('submit', function(e) {
+				e.preventDefault();
+				const searchTerm = $('#usersSearchInput').val().trim();
+				
+				if (!searchTerm) {
+					$('#usersContainer').html(originalUsers);
+					return;
+				}
+				
+				$('#usersContainer').html('<tr><td colspan="6" class="text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</td></tr>');
+				
+				$.ajax({
+					url: '<?= site_url('/admin/users/search') ?>',
+					method: 'GET',
+					data: { search_term: searchTerm },
+					dataType: 'json',
+					headers: { 'X-Requested-With': 'XMLHttpRequest' }
+				})
+				.done(function(response) {
+					$('#usersContainer').empty();
+					const users = response.users || response || [];
+					
+					if (users.length > 0) {
+						$.each(users, function(index, user) {
+							const userJson = JSON.stringify(user).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+							const roleBadge = user.role === 'admin' ? 'danger' : (user.role === 'instructor' ? 'warning' : 'info');
+							const canEdit = user.id != <?= session()->get('id') ?>;
+							const actionsHtml = canEdit 
+								? '<button class="btn btn-sm btn-warning" onclick="editUser(' + userJson + ')"><i class="fas fa-edit"></i></button> ' +
+								  '<button class="btn btn-sm btn-danger" onclick="deleteUser(' + user.id + ', \'' + user.name.replace(/'/g, "\\'") + '\')"><i class="fas fa-trash"></i></button>'
+								: '<span class="text-muted small"><i class="fas fa-info-circle"></i> Current User</span>';
+							
+							const row = $('<tr>')
+								.addClass('user-row')
+								.attr('data-name', (user.name || '').toLowerCase())
+								.attr('data-email', (user.email || '').toLowerCase())
+								.attr('data-role', (user.role || '').toLowerCase())
+								.html(
+									'<td>' + (user.id || '') + '</td>' +
+									'<td>' + (user.name || '') + '</td>' +
+									'<td>' + (user.email || '') + '</td>' +
+									'<td><span class="badge bg-' + roleBadge + '">' + (user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '') + '</span></td>' +
+									'<td>' + (user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A') + '</td>' +
+									'<td>' + actionsHtml + '</td>'
+								);
+							$('#usersContainer').append(row);
+						});
+					} else {
+						$('#usersContainer').html('<tr><td colspan="6" class="text-center text-muted">No users found matching your search.</td></tr>');
+					}
+				})
+				.fail(function() {
+					$('#usersContainer').html('<tr><td colspan="6" class="text-center text-danger">Error loading search results. Please try again.</td></tr>');
+				});
+			});
+		});
 		</script>
 
 	<?php else: ?>

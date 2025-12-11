@@ -9,6 +9,7 @@ use App\Models\SemesterModel;
 use App\Models\TeacherAssignmentModel;
 use App\Models\EnrollmentModel;
 use App\Models\UserModel;
+use App\Models\NotificationModel;
 
 class Instructor extends BaseController
 {
@@ -22,8 +23,9 @@ class Instructor extends BaseController
         }
 
         $role = strtolower((string) session()->get('role'));
-        if ($role !== 'instructor') {
-            session()->setFlashdata('error', 'Access denied. Instructor access required.');
+        // Allow both instructor and admin access
+        if ($role !== 'instructor' && $role !== 'admin') {
+            session()->setFlashdata('error', 'Access denied. Instructor or Admin access required.');
             return redirect()->to('/dashboard');
         }
 
@@ -360,6 +362,10 @@ class Instructor extends BaseController
             $userModel = new UserModel();
             $students = $userModel->where('role', 'student')->orderBy('name', 'ASC')->findAll();
 
+            // Get course materials
+            $materialModel = new \App\Models\MaterialModel();
+            $materials = $materialModel->getMaterialsByCourse($courseId);
+
             $data = [
                 'course' => $course,
                 'enrollments' => $enrollments,
@@ -367,6 +373,7 @@ class Instructor extends BaseController
                 'students' => $students,
                 'term_start_date' => $termStartDate,
                 'term_end_date' => $termEndDate,
+                'materials' => $materials,
             ];
 
             return view('instructor/view_course', $data);
@@ -429,6 +436,11 @@ class Instructor extends BaseController
             if (isset($existing['status']) && $existing['status'] === 'pending') {
                 try {
                     if ($enrollmentModel->update($existing['id'], ['status' => 'approved'])) {
+                        // Create notification for the student
+                        $notificationModel = new NotificationModel();
+                        $message = 'Your enrollment request for ' . esc($course['title']) . ' has been approved!';
+                        $notificationModel->createNotification($studentId, $message);
+                        
                         session()->setFlashdata('success', 'Student enrollment request approved!');
                         return redirect()->to('/instructor/course/' . $courseId);
                     }
@@ -498,6 +510,26 @@ class Instructor extends BaseController
 
         try {
             if ($enrollmentModel->insert($enrollmentData)) {
+                // Create notification for the student
+                $notificationModel = new NotificationModel();
+                $message = 'You have been enrolled in ' . esc($course['title']);
+                $notificationModel->createNotification($studentId, $message);
+                
+                // Create notification for all admins
+                $userModel = new UserModel();
+                $admins = $userModel->getAdmins();
+                if (!empty($admins)) {
+                    $student = $userModel->find($studentId);
+                    $studentName = $student ? $student['name'] : 'A student';
+                    $instructor = $userModel->find($userId);
+                    $instructorName = $instructor ? $instructor['name'] : 'An instructor';
+                    
+                    $adminMessage = $instructorName . ' has enrolled ' . $studentName . ' in ' . esc($course['title']);
+                    foreach ($admins as $admin) {
+                        $notificationModel->createNotification($admin['id'], $adminMessage);
+                    }
+                }
+                
                 session()->setFlashdata('success', 'Student enrolled successfully!');
             } else {
                 $errors = $enrollmentModel->errors();
@@ -681,6 +713,12 @@ class Instructor extends BaseController
 
             if (!empty($updateData)) {
                 if ($enrollmentModel->update($enrollmentId, $updateData)) {
+                    // Create notification for the student
+                    $notificationModel = new NotificationModel();
+                    $studentId = $enrollment['user_id'];
+                    $message = 'Your enrollment request for ' . esc($course['title']) . ' has been approved!';
+                    $notificationModel->createNotification($studentId, $message);
+                    
                     session()->setFlashdata('success', 'Enrollment approved successfully!');
                 } else {
                     $errors = $enrollmentModel->errors();
@@ -688,6 +726,12 @@ class Instructor extends BaseController
                 }
             } else {
                 // If status column doesn't exist, enrollment is already considered approved
+                // Still create notification
+                $notificationModel = new NotificationModel();
+                $studentId = $enrollment['user_id'];
+                $message = 'Your enrollment request for ' . esc($course['title']) . ' has been approved!';
+                $notificationModel->createNotification($studentId, $message);
+                
                 session()->setFlashdata('success', 'Enrollment approved successfully!');
             }
         } catch (\Exception $e) {

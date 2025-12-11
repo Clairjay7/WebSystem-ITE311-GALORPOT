@@ -60,6 +60,20 @@
                 <h5 class="mb-0"><i class="fas fa-list"></i> Completed Courses (<?= count($courses) ?>)</h5>
             </div>
             <div class="card-body">
+                <!-- Search Form -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <form id="searchForm" class="d-flex">
+                            <div class="input-group">
+                                <input type="text" id="searchInput" class="form-control" placeholder="Search by course title, CN, or school year..." name="search_term">
+                                <button class="btn btn-outline-primary" type="submit">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -76,9 +90,9 @@
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="coursesContainer">
                             <?php foreach ($courses as $course): ?>
-                                <tr class="table-secondary">
+                                <tr class="table-secondary course-row" data-title="<?= strtolower(esc($course['title'])) ?>" data-control-number="<?= strtolower(esc($course['control_number'] ?? '')) ?>" data-school-year="<?= strtolower(esc($course['school_year'] ?? '')) ?>">
                                     <td><strong><?= esc($course['control_number'] ?? 'N/A') ?></strong></td>
                                     <td><strong><?= esc($course['title']) ?></strong></td>
                                     <td><span class="badge bg-info"><?= esc($course['units'] ?? '0') ?> units</span></td>
@@ -114,6 +128,105 @@
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+// Completed courses search functionality
+$(document).ready(function() {
+    const originalCourses = $('#coursesContainer').html();
+    
+    // Instant client-side filtering
+    $('#searchInput').on('keyup', function() {
+        const searchValue = $(this).val().toLowerCase().trim();
+        
+        if (searchValue === '') {
+            $('#coursesContainer').html(originalCourses);
+            return;
+        }
+        
+        let visibleCount = 0;
+        $('.course-row').each(function() {
+            const title = $(this).data('title') || '';
+            const controlNumber = $(this).data('control-number') || '';
+            const schoolYear = $(this).data('school-year') || '';
+            const text = (title + ' ' + controlNumber + ' ' + schoolYear).toLowerCase();
+            
+            if (text.includes(searchValue)) {
+                $(this).show();
+                visibleCount++;
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        if (visibleCount === 0) {
+            if ($('#noResultsRow').length === 0) {
+                $('#coursesContainer').append('<tr id="noResultsRow" class="table-secondary"><td colspan="10" class="text-center text-muted">No courses found matching your search.</td></tr>');
+            }
+        } else {
+            $('#noResultsRow').remove();
+        }
+    });
+    
+    // Server-side search with AJAX
+    $('#searchForm').on('submit', function(e) {
+        e.preventDefault();
+        const searchTerm = $('#searchInput').val().trim();
+        
+        if (!searchTerm) {
+            $('#coursesContainer').html(originalCourses);
+            return;
+        }
+        
+        $('#coursesContainer').html('<tr class="table-secondary"><td colspan="10" class="text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</td></tr>');
+        
+        $.ajax({
+            url: '<?= site_url('/courses/search') ?>',
+            method: 'GET',
+            data: { 
+                search_term: searchTerm,
+                context: 'instructor'
+            },
+            dataType: 'json',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .done(function(response) {
+            $('#coursesContainer').empty();
+            const courses = response.courses || response || [];
+            
+            if (courses.length > 0) {
+                $.each(courses, function(index, course) {
+                    const startDate = course.term_start_date ? new Date(course.term_start_date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
+                    const endDate = course.term_end_date ? new Date(course.term_end_date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
+                    
+                    const row = $('<tr>')
+                        .addClass('table-secondary course-row')
+                        .attr('data-title', (course.title || '').toLowerCase())
+                        .attr('data-control-number', (course.control_number || '').toLowerCase())
+                        .attr('data-school-year', (course.school_year || '').toLowerCase())
+                        .html(
+                            '<td><strong>' + (course.control_number || 'N/A') + '</strong></td>' +
+                            '<td><strong>' + (course.title || '') + '</strong></td>' +
+                            '<td><span class="badge bg-info">' + (course.units || '0') + ' units</span></td>' +
+                            '<td><strong>' + (course.school_year || 'N/A') + '</strong></td>' +
+                            '<td>Semester ' + (course.semester || 'N/A') + '</td>' +
+                            '<td>Term ' + (course.term || 'N/A') + '</td>' +
+                            '<td><i class="fas fa-calendar-check text-success"></i> ' + startDate + '</td>' +
+                            '<td><i class="fas fa-calendar-times text-warning"></i> <strong>' + endDate + '</strong></td>' +
+                            '<td><span class="badge bg-secondary">COMPLETED</span></td>' +
+                            '<td><a href="<?= site_url('/instructor/course/') ?>' + course.id + '" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View Course</a></td>'
+                        );
+                    $('#coursesContainer').append(row);
+                });
+            } else {
+                $('#coursesContainer').html('<tr class="table-secondary"><td colspan="10" class="text-center text-muted">No completed courses found matching your search.</td></tr>');
+            }
+        })
+        .fail(function() {
+            $('#coursesContainer').html('<tr class="table-secondary"><td colspan="10" class="text-center text-danger">Error loading search results. Please try again.</td></tr>');
+        });
+    });
+});
+</script>
 
 <?= $this->endSection() ?>
 

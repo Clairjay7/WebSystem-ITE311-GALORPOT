@@ -9,6 +9,7 @@ use App\Models\SchoolYearModel;
 use App\Models\SemesterModel;
 use App\Models\TermModel;
 use App\Models\TeacherAssignmentModel;
+use App\Models\NotificationModel;
 
 class Admin extends BaseController
 {
@@ -1133,6 +1134,12 @@ class Admin extends BaseController
             if ($assignmentId) {
                 // Update the course's instructor_id
                 $courseModel->update($courseId, ['instructor_id' => $teacherId]);
+                
+                // Create notification for the teacher
+                $notificationModel = new NotificationModel();
+                $message = 'You have been assigned to teach ' . esc($course['title']);
+                $notificationModel->createNotification($teacherId, $message);
+                
                 session()->setFlashdata('success', 'Teacher assigned successfully!');
                 log_message('info', 'Teacher assignment created successfully. Assignment ID: ' . $assignmentId . ', Teacher ID: ' . $teacherId . ', Course ID: ' . $courseId);
             } else {
@@ -1341,6 +1348,13 @@ class Admin extends BaseController
                     }
                 }
                 
+                // Create notification for the new teacher if teacher changed
+                if ($oldTeacherId != $teacherId) {
+                    $notificationModel = new NotificationModel();
+                    $message = 'You have been assigned to teach ' . esc($course['title']);
+                    $notificationModel->createNotification($teacherId, $message);
+                }
+                
                 session()->setFlashdata('success', 'Teacher assignment updated successfully! The old teacher will no longer see this course.');
                 log_message('info', 'Teacher assignment updated. ID: ' . $id . ', Old Teacher: ' . $oldTeacherId . ', New Teacher: ' . $teacherId . ', Course: ' . $courseId);
             } else {
@@ -1460,6 +1474,54 @@ class Admin extends BaseController
         }
 
         return redirect()->to('/admin/teacher-assignments');
+    }
+
+    /**
+     * Search users by name, email, or role
+     * Returns JSON for AJAX requests
+     */
+    public function searchUsers()
+    {
+        if ($redirect = $this->ensureAdmin()) {
+            return $redirect;
+        }
+
+        $searchTerm = $this->request->getGet('search_term') ?? $this->request->getPost('search_term') ?? '';
+        
+        $userModel = new UserModel();
+        
+        // Start building query
+        $userModel->select('users.*');
+
+        // Apply search term filter
+        if (!empty($searchTerm)) {
+            $userModel->groupStart()
+                ->like('users.name', $searchTerm)
+                ->orLike('users.email', $searchTerm)
+                ->orLike('users.role', $searchTerm)
+                ->groupEnd();
+        }
+
+        // Only show non-deleted users
+        $userModel->where('users.deleted_at', null);
+
+        // Order by creation date
+        $userModel->orderBy('users.created_at', 'DESC');
+
+        // Execute query
+        $users = $userModel->findAll();
+
+        // Return JSON for AJAX requests
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'users' => $users,
+                'searchTerm' => $searchTerm,
+                'count' => count($users)
+            ]);
+        }
+
+        // For non-AJAX requests, redirect to main page
+        return redirect()->to('/dashboard');
     }
 
     /**

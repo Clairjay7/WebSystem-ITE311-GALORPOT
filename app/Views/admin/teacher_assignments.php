@@ -74,6 +74,20 @@
             <h5 class="mb-0"><i class="fas fa-list"></i> All Teacher Assignments</h5>
         </div>
         <div class="card-body">
+            <!-- Search Form -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <form id="searchForm" class="d-flex">
+                        <div class="input-group">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search by teacher name, course title, or control number..." name="search_term">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -90,10 +104,10 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="assignmentsContainer">
                         <?php if (!empty($assignments)): ?>
                             <?php foreach ($assignments as $assignment): ?>
-                                <tr>
+                                <tr class="assignment-row" data-teacher-name="<?= strtolower(esc($assignment['teacher_name'])) ?>" data-course-title="<?= strtolower(esc($assignment['course_title'])) ?>" data-control-number="<?= strtolower(esc($assignment['control_number'] ?? '')) ?>">
                                     <td><?= $assignment['id'] ?></td>
                                     <td><?= esc($assignment['teacher_name']) ?></td>
                                     <td><?= esc($assignment['course_title']) ?></td>
@@ -307,6 +321,107 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Teacher assignment search functionality
+    $(document).ready(function() {
+        const originalAssignments = $('#assignmentsContainer').html();
+        
+        // Instant client-side filtering
+        $('#searchInput').on('keyup', function() {
+            const searchValue = $(this).val().toLowerCase().trim();
+            
+            if (searchValue === '') {
+                $('#assignmentsContainer').html(originalAssignments);
+                return;
+            }
+            
+            let visibleCount = 0;
+            $('.assignment-row').each(function() {
+                const teacherName = $(this).data('teacher-name') || '';
+                const courseTitle = $(this).data('course-title') || '';
+                const controlNumber = $(this).data('control-number') || '';
+                const text = (teacherName + ' ' + courseTitle + ' ' + controlNumber).toLowerCase();
+                
+                if (text.includes(searchValue)) {
+                    $(this).show();
+                    visibleCount++;
+                } else {
+                    $(this).hide();
+                }
+            });
+            
+            if (visibleCount === 0) {
+                if ($('#noResultsRow').length === 0) {
+                    $('#assignmentsContainer').append('<tr id="noResultsRow"><td colspan="10" class="text-center text-muted">No assignments found matching your search.</td></tr>');
+                }
+            } else {
+                $('#noResultsRow').remove();
+            }
+        });
+        
+        // Server-side search with AJAX
+        $('#searchForm').on('submit', function(e) {
+            e.preventDefault();
+            const searchTerm = $('#searchInput').val().trim();
+            
+            if (!searchTerm) {
+                $('#assignmentsContainer').html(originalAssignments);
+                return;
+            }
+            
+            $('#assignmentsContainer').html('<tr><td colspan="10" class="text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</td></tr>');
+            
+            $.ajax({
+                url: '<?= site_url('/admin/teacher-assignments/search') ?>',
+                method: 'GET',
+                data: { search_term: searchTerm },
+                dataType: 'json',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .done(function(response) {
+                $('#assignmentsContainer').empty();
+                const assignments = response.assignments || response || [];
+                
+                if (assignments.length > 0) {
+                    $.each(assignments, function(index, assignment) {
+                        const assignmentJson = JSON.stringify(assignment).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                        const row = $('<tr>')
+                            .addClass('assignment-row')
+                            .attr('data-teacher-name', (assignment.teacher_name || '').toLowerCase())
+                            .attr('data-course-title', (assignment.course_title || '').toLowerCase())
+                            .attr('data-control-number', (assignment.control_number || '').toLowerCase())
+                            .html(
+                                '<td>' + (assignment.id || '') + '</td>' +
+                                '<td>' + (assignment.teacher_name || '') + '</td>' +
+                                '<td>' + (assignment.course_title || '') + '</td>' +
+                                '<td><strong>' + (assignment.control_number || 'N/A') + '</strong></td>' +
+                                '<td><span class="badge bg-info">' + (assignment.units || '0') + ' units</span></td>' +
+                                '<td>' + (assignment.time || 'N/A') + '</td>' +
+                                '<td>' + (assignment.school_year || 'N/A') + '</td>' +
+                                '<td>Semester ' + (assignment.semester || 'N/A') + '</td>' +
+                                '<td>Term ' + (assignment.term || 'N/A') + '</td>' +
+                                '<td>' +
+                                '<button class="btn btn-sm btn-warning" onclick="editAssignment(' + assignmentJson + ')">' +
+                                '<i class="fas fa-edit"></i></button> ' +
+                                '<form method="post" action="<?= site_url('/admin/teacher-assignments/delete') ?>" class="d-inline" onsubmit="return confirm(\'Are you sure?\')">' +
+                                '<?= csrf_field() ?>' +
+                                '<input type="hidden" name="id" value="' + assignment.id + '">' +
+                                '<button type="submit" class="btn btn-sm btn-danger">' +
+                                '<i class="fas fa-trash"></i></button>' +
+                                '</form>' +
+                                '</td>'
+                            );
+                        $('#assignmentsContainer').append(row);
+                    });
+                } else {
+                    $('#assignmentsContainer').html('<tr><td colspan="10" class="text-center text-muted">No assignments found matching your search.</td></tr>');
+                }
+            })
+            .fail(function() {
+                $('#assignmentsContainer').html('<tr><td colspan="10" class="text-center text-danger">Error loading search results. Please try again.</td></tr>');
+            });
+        });
+    });
 });
 </script>
 

@@ -1,0 +1,487 @@
+ERROR - 2025-12-10 14:20:21 --> mysqli_sql_exception: Table 'notifications' already exists in C:\xampp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php:327
+Stack trace:
+#0 C:\xampp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php(327): mysqli->query('CREATE TABLE `n...', 0)
+#1 C:\xampp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('CREATE TABLE `n...')
+#2 C:\xampp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('CREATE TABLE `n...')
+#3 C:\xampp\htdocs\ITE311-GALORPOT\system\Database\Forge.php(570): CodeIgniter\Database\BaseConnection->query('CREATE TABLE `n...')
+#4 C:\xampp\htdocs\ITE311-GALORPOT\app\Database\Migrations\20251210141554_CreateNotificationsTable.php(40): CodeIgniter\Database\Forge->createTable('notifications')
+#5 C:\xampp\htdocs\ITE311-GALORPOT\system\Database\MigrationRunner.php(876): App\Database\Migrations\CreateNotificationsTable->up()
+#6 C:\xampp\htdocs\ITE311-GALORPOT\system\Database\MigrationRunner.php(182): CodeIgniter\Database\MigrationRunner->migrate('up', Object(stdClass))
+#7 C:\xampp\htdocs\ITE311-GALORPOT\system\Commands\Database\Migrate.php(85): CodeIgniter\Database\MigrationRunner->latest(NULL)
+#8 C:\xampp\htdocs\ITE311-GALORPOT\system\CLI\Commands.php(74): CodeIgniter\Commands\Database\Migrate->run(Array)
+#9 C:\xampp\htdocs\ITE311-GALORPOT\system\CLI\Console.php(47): CodeIgniter\CLI\Commands->run('migrate', Array)
+#10 C:\xampp\htdocs\ITE311-GALORPOT\system\Boot.php(388): CodeIgniter\CLI\Console->run()
+#11 C:\xampp\htdocs\ITE311-GALORPOT\system\Boot.php(133): CodeIgniter\Boot::runCommand(Object(CodeIgniter\CLI\Console))
+#12 C:\xampp\htdocs\ITE311-GALORPOT\spark(87): CodeIgniter\Boot::bootSpark(Object(Config\Paths))
+#13 {main}
+ERROR - 2025-12-10 16:14:15 --> Error connecting to the database: mysqli_sql_exception: Unknown database 'lms_galorpot' in F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php:201
+Stack trace:
+#0 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php(201): mysqli->real_connect('localhost', 'root', Object(SensitiveParameterValue), 'lms_galorpot', 3306, '', 0)
+#1 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(419): CodeIgniter\Database\MySQLi\Connection->connect(false)
+#2 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(614): CodeIgniter\Database\BaseConnection->initialize()
+#3 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(1525): CodeIgniter\Database\BaseConnection->query('SHOW TABLES FRO...')
+#4 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(1545): CodeIgniter\Database\BaseConnection->listTables()
+#5 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MigrationRunner.php(768): CodeIgniter\Database\BaseConnection->tableExists('migrations')
+#6 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MigrationRunner.php(162): CodeIgniter\Database\MigrationRunner->ensureTable()
+#7 F:\xammp\htdocs\ITE311-GALORPOT\system\Commands\Database\Migrate.php(85): CodeIgniter\Database\MigrationRunner->latest(NULL)
+#8 F:\xammp\htdocs\ITE311-GALORPOT\system\CLI\Commands.php(74): CodeIgniter\Commands\Database\Migrate->run(Array)
+#9 F:\xammp\htdocs\ITE311-GALORPOT\system\CLI\Console.php(47): CodeIgniter\CLI\Commands->run('migrate', Array)
+#10 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(388): CodeIgniter\CLI\Console->run()
+#11 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(133): CodeIgniter\Boot::runCommand(Object(CodeIgniter\CLI\Console))
+#12 F:\xammp\htdocs\ITE311-GALORPOT\spark(87): CodeIgniter\Boot::bootSpark(Object(Config\Paths))
+#13 {main}
+
+Next CodeIgniter\Database\Exceptions\DatabaseException: Unknown database 'lms_galorpot' in F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php:246
+Stack trace:
+#0 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(419): CodeIgniter\Database\MySQLi\Connection->connect(false)
+#1 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(614): CodeIgniter\Database\BaseConnection->initialize()
+#2 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(1525): CodeIgniter\Database\BaseConnection->query('SHOW TABLES FRO...')
+#3 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(1545): CodeIgniter\Database\BaseConnection->listTables()
+#4 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MigrationRunner.php(768): CodeIgniter\Database\BaseConnection->tableExists('migrations')
+#5 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MigrationRunner.php(162): CodeIgniter\Database\MigrationRunner->ensureTable()
+#6 F:\xammp\htdocs\ITE311-GALORPOT\system\Commands\Database\Migrate.php(85): CodeIgniter\Database\MigrationRunner->latest(NULL)
+#7 F:\xammp\htdocs\ITE311-GALORPOT\system\CLI\Commands.php(74): CodeIgniter\Commands\Database\Migrate->run(Array)
+#8 F:\xammp\htdocs\ITE311-GALORPOT\system\CLI\Console.php(47): CodeIgniter\CLI\Commands->run('migrate', Array)
+#9 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(388): CodeIgniter\CLI\Console->run()
+#10 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(133): CodeIgniter\Boot::runCommand(Object(CodeIgniter\CLI\Console))
+#11 F:\xammp\htdocs\ITE311-GALORPOT\spark(87): CodeIgniter\Boot::bootSpark(Object(Config\Paths))
+#12 {main}
+CRITICAL - 2025-12-10 16:15:00 --> ErrorException: Cannot declare class App\Database\Migrations\CreateNotificationsTable, because the name is already in use
+[Method: CLI, Route: migrate]
+in APPPATH\Database\Migrations\20251210141554_CreateNotificationsTable.php on line 7.
+ 1 [internal function]: CodeIgniter\Debug\Exceptions->shutdownHandler()
+ERROR - 2025-12-10 16:34:35 --> mysqli_sql_exception: Unknown column 'name' in 'field list' in F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php:327
+Stack trace:
+#0 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php(327): mysqli->query('INSERT INTO `us...', 0)
+#1 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO `us...')
+#2 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO `us...')
+#3 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseBuilder.php(2345): CodeIgniter\Database\BaseConnection->query('INSERT INTO `us...', Array, false)
+#4 F:\xammp\htdocs\ITE311-GALORPOT\system\Model.php(394): CodeIgniter\Database\BaseBuilder->insert()
+#5 F:\xammp\htdocs\ITE311-GALORPOT\system\BaseModel.php(838): CodeIgniter\Model->doInsert(Array)
+#6 F:\xammp\htdocs\ITE311-GALORPOT\system\Model.php(797): CodeIgniter\BaseModel->insert(Array, true)
+#7 F:\xammp\htdocs\ITE311-GALORPOT\app\Controllers\Auth.php(245): CodeIgniter\Model->insert(Array)
+#8 F:\xammp\htdocs\ITE311-GALORPOT\app\Controllers\Auth.php(90): App\Controllers\Auth->ensureDefaultUsers()
+#9 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(933): App\Controllers\Auth->login()
+#10 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+#11 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#12 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(363): CodeIgniter\CodeIgniter->run()
+#13 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#14 F:\xammp\htdocs\ITE311-GALORPOT\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#15 {main}
+ERROR - 2025-12-10 16:34:35 --> mysqli_sql_exception: Table 'hospital_management.ci_sessions' doesn't exist in F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php:327
+Stack trace:
+#0 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php(327): mysqli->query('SELECT `data`\nF...', 0)
+#1 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `data`\nF...')
+#2 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `data`\nF...')
+#3 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`\nF...', Array, false)
+#4 F:\xammp\htdocs\ITE311-GALORPOT\system\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+#5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('583c24f4ff89be4...')
+#6 F:\xammp\htdocs\ITE311-GALORPOT\system\Session\Session.php(912): session_start()
+#7 F:\xammp\htdocs\ITE311-GALORPOT\system\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+#8 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\Services.php(715): CodeIgniter\Session\Session->start()
+#9 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+#10 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', Array)
+#11 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', NULL)
+#12 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+#13 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', Array)
+#14 F:\xammp\htdocs\ITE311-GALORPOT\system\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+#15 F:\xammp\htdocs\ITE311-GALORPOT\system\Common.php(968): service('session')
+#16 F:\xammp\htdocs\ITE311-GALORPOT\app\Views\auth\login.php(16): session()
+#17 F:\xammp\htdocs\ITE311-GALORPOT\system\View\View.php(226): include('F:\\xammp\\htdocs...')
+#18 F:\xammp\htdocs\ITE311-GALORPOT\system\View\View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+#19 F:\xammp\htdocs\ITE311-GALORPOT\system\Common.php(1167): CodeIgniter\View\View->render('auth/login', Array, true)
+#20 F:\xammp\htdocs\ITE311-GALORPOT\app\Controllers\Auth.php(133): view('auth/login', Array)
+#21 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(933): App\Controllers\Auth->login()
+#22 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+#23 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#24 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(363): CodeIgniter\CodeIgniter->run()
+#25 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#26 F:\xammp\htdocs\ITE311-GALORPOT\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#27 {main}
+CRITICAL - 2025-12-10 16:34:35 --> CodeIgniter\Database\Exceptions\DatabaseException: Table 'hospital_management.ci_sessions' doesn't exist
+[Method: GET, Route: login]
+in SYSTEMPATH\Database\BaseConnection.php on line 684.
+ 1 SYSTEMPATH\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = :id:
+AND `ip_address` = :ip_address:', [...], false)
+ 2 SYSTEMPATH\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+ 3 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('583c24f4ff89be47ffada19bc8397a41')
+ 4 SYSTEMPATH\Session\Session.php(912): session_start()
+ 5 SYSTEMPATH\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+ 6 SYSTEMPATH\Config\Services.php(715): CodeIgniter\Session\Session->start()
+ 7 SYSTEMPATH\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+ 8 SYSTEMPATH\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', [...])
+ 9 SYSTEMPATH\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', null)
+10 SYSTEMPATH\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+11 SYSTEMPATH\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', [])
+12 SYSTEMPATH\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+13 SYSTEMPATH\Common.php(968): service('session')
+14 APPPATH\Views\auth\login.php(16): session()
+15 SYSTEMPATH\View\View.php(226): include('F:\\xammp\\htdocs\\ITE311-GALORPOT\\app\\Views\\auth\\login.php')
+16 SYSTEMPATH\View\View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+17 SYSTEMPATH\Common.php(1167): CodeIgniter\View\View->render('auth/login', [], true)
+18 APPPATH\Controllers\Auth.php(133): view('auth/login', [])
+19 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\Auth->login()
+20 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+21 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+22 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+23 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+24 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-12-10 16:34:35 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Table 'hospital_management.ci_sessions' doesn't exist
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 332.
+ 1 SYSTEMPATH\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:583c24f4ff89be47ffada19bc8397a41\'
+AND `ip_address` = \'::1\'')
+ 2 SYSTEMPATH\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:583c24f4ff89be47ffada19bc8397a41\'
+AND `ip_address` = \'::1\'')
+ 3 SYSTEMPATH\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = :id:
+AND `ip_address` = :ip_address:', [...], false)
+ 4 SYSTEMPATH\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+ 5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('583c24f4ff89be47ffada19bc8397a41')
+ 6 SYSTEMPATH\Session\Session.php(912): session_start()
+ 7 SYSTEMPATH\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+ 8 SYSTEMPATH\Config\Services.php(715): CodeIgniter\Session\Session->start()
+ 9 SYSTEMPATH\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+10 SYSTEMPATH\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', [...])
+11 SYSTEMPATH\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', null)
+12 SYSTEMPATH\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+13 SYSTEMPATH\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', [])
+14 SYSTEMPATH\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+15 SYSTEMPATH\Common.php(968): service('session')
+16 APPPATH\Views\auth\login.php(16): session()
+17 SYSTEMPATH\View\View.php(226): include('F:\\xammp\\htdocs\\ITE311-GALORPOT\\app\\Views\\auth\\login.php')
+18 SYSTEMPATH\View\View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+19 SYSTEMPATH\Common.php(1167): CodeIgniter\View\View->render('auth/login', [], true)
+20 APPPATH\Controllers\Auth.php(133): view('auth/login', [])
+21 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\Auth->login()
+22 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+23 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+24 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+25 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+26 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-12-10 16:34:35 --> [Caused by] mysqli_sql_exception: Table 'hospital_management.ci_sessions' doesn't exist
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 327.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(327): mysqli->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:583c24f4ff89be47ffada19bc8397a41\'
+AND `ip_address` = \'::1\'', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:583c24f4ff89be47ffada19bc8397a41\'
+AND `ip_address` = \'::1\'')
+ 3 SYSTEMPATH\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:583c24f4ff89be47ffada19bc8397a41\'
+AND `ip_address` = \'::1\'')
+ 4 SYSTEMPATH\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = :id:
+AND `ip_address` = :ip_address:', [...], false)
+ 5 SYSTEMPATH\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+ 6 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('583c24f4ff89be47ffada19bc8397a41')
+ 7 SYSTEMPATH\Session\Session.php(912): session_start()
+ 8 SYSTEMPATH\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+ 9 SYSTEMPATH\Config\Services.php(715): CodeIgniter\Session\Session->start()
+10 SYSTEMPATH\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+11 SYSTEMPATH\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', [...])
+12 SYSTEMPATH\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', null)
+13 SYSTEMPATH\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+14 SYSTEMPATH\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', [])
+15 SYSTEMPATH\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+16 SYSTEMPATH\Common.php(968): service('session')
+17 APPPATH\Views\auth\login.php(16): session()
+18 SYSTEMPATH\View\View.php(226): include('F:\\xammp\\htdocs\\ITE311-GALORPOT\\app\\Views\\auth\\login.php')
+19 SYSTEMPATH\View\View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+20 SYSTEMPATH\Common.php(1167): CodeIgniter\View\View->render('auth/login', [], true)
+21 APPPATH\Controllers\Auth.php(133): view('auth/login', [])
+22 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\Auth->login()
+23 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+24 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+25 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+26 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+27 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-12-10 16:45:08 --> mysqli_sql_exception: Unknown column 'users.deleted_at' in 'where clause' in F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php:327
+Stack trace:
+#0 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php(327): mysqli->query('SELECT *\nFROM `...', 0)
+#1 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT *\nFROM `...')
+#2 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT *\nFROM `...')
+#3 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT *\nFROM `...', Array, false)
+#4 F:\xammp\htdocs\ITE311-GALORPOT\system\Model.php(330): CodeIgniter\Database\BaseBuilder->get()
+#5 F:\xammp\htdocs\ITE311-GALORPOT\system\BaseModel.php(715): CodeIgniter\Model->doFirst()
+#6 F:\xammp\htdocs\ITE311-GALORPOT\app\Controllers\Auth.php(243): CodeIgniter\BaseModel->first()
+#7 F:\xammp\htdocs\ITE311-GALORPOT\app\Controllers\Auth.php(90): App\Controllers\Auth->ensureDefaultUsers()
+#8 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(933): App\Controllers\Auth->login()
+#9 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+#10 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#11 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(363): CodeIgniter\CodeIgniter->run()
+#12 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#13 F:\xammp\htdocs\ITE311-GALORPOT\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#14 {main}
+ERROR - 2025-12-10 16:45:08 --> mysqli_sql_exception: Table 'lms_galorpot.ci_sessions' doesn't exist in F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php:327
+Stack trace:
+#0 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php(327): mysqli->query('SELECT `data`\nF...', 0)
+#1 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `data`\nF...')
+#2 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `data`\nF...')
+#3 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`\nF...', Array, false)
+#4 F:\xammp\htdocs\ITE311-GALORPOT\system\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+#5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('a877bd4d1c80707...')
+#6 F:\xammp\htdocs\ITE311-GALORPOT\system\Session\Session.php(912): session_start()
+#7 F:\xammp\htdocs\ITE311-GALORPOT\system\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+#8 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\Services.php(715): CodeIgniter\Session\Session->start()
+#9 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+#10 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', Array)
+#11 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', NULL)
+#12 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+#13 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', Array)
+#14 F:\xammp\htdocs\ITE311-GALORPOT\system\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+#15 F:\xammp\htdocs\ITE311-GALORPOT\system\Common.php(968): service('session')
+#16 F:\xammp\htdocs\ITE311-GALORPOT\app\Views\auth\login.php(16): session()
+#17 F:\xammp\htdocs\ITE311-GALORPOT\system\View\View.php(226): include('F:\\xammp\\htdocs...')
+#18 F:\xammp\htdocs\ITE311-GALORPOT\system\View\View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+#19 F:\xammp\htdocs\ITE311-GALORPOT\system\Common.php(1167): CodeIgniter\View\View->render('auth/login', Array, true)
+#20 F:\xammp\htdocs\ITE311-GALORPOT\app\Controllers\Auth.php(133): view('auth/login', Array)
+#21 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(933): App\Controllers\Auth->login()
+#22 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+#23 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#24 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(363): CodeIgniter\CodeIgniter->run()
+#25 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#26 F:\xammp\htdocs\ITE311-GALORPOT\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#27 {main}
+CRITICAL - 2025-12-10 16:45:08 --> CodeIgniter\Database\Exceptions\DatabaseException: Table 'lms_galorpot.ci_sessions' doesn't exist
+[Method: GET, Route: login]
+in SYSTEMPATH\Database\BaseConnection.php on line 684.
+ 1 SYSTEMPATH\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = :id:
+AND `ip_address` = :ip_address:', [...], false)
+ 2 SYSTEMPATH\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+ 3 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('a877bd4d1c80707b164452657eeb4999')
+ 4 SYSTEMPATH\Session\Session.php(912): session_start()
+ 5 SYSTEMPATH\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+ 6 SYSTEMPATH\Config\Services.php(715): CodeIgniter\Session\Session->start()
+ 7 SYSTEMPATH\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+ 8 SYSTEMPATH\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', [...])
+ 9 SYSTEMPATH\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', null)
+10 SYSTEMPATH\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+11 SYSTEMPATH\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', [])
+12 SYSTEMPATH\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+13 SYSTEMPATH\Common.php(968): service('session')
+14 APPPATH\Views\auth\login.php(16): session()
+15 SYSTEMPATH\View\View.php(226): include('F:\\xammp\\htdocs\\ITE311-GALORPOT\\app\\Views\\auth\\login.php')
+16 SYSTEMPATH\View\View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+17 SYSTEMPATH\Common.php(1167): CodeIgniter\View\View->render('auth/login', [], true)
+18 APPPATH\Controllers\Auth.php(133): view('auth/login', [])
+19 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\Auth->login()
+20 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+21 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+22 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+23 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+24 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-12-10 16:45:08 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Table 'lms_galorpot.ci_sessions' doesn't exist
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 332.
+ 1 SYSTEMPATH\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:a877bd4d1c80707b164452657eeb4999\'
+AND `ip_address` = \'::1\'')
+ 2 SYSTEMPATH\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:a877bd4d1c80707b164452657eeb4999\'
+AND `ip_address` = \'::1\'')
+ 3 SYSTEMPATH\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = :id:
+AND `ip_address` = :ip_address:', [...], false)
+ 4 SYSTEMPATH\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+ 5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('a877bd4d1c80707b164452657eeb4999')
+ 6 SYSTEMPATH\Session\Session.php(912): session_start()
+ 7 SYSTEMPATH\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+ 8 SYSTEMPATH\Config\Services.php(715): CodeIgniter\Session\Session->start()
+ 9 SYSTEMPATH\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+10 SYSTEMPATH\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', [...])
+11 SYSTEMPATH\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', null)
+12 SYSTEMPATH\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+13 SYSTEMPATH\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', [])
+14 SYSTEMPATH\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+15 SYSTEMPATH\Common.php(968): service('session')
+16 APPPATH\Views\auth\login.php(16): session()
+17 SYSTEMPATH\View\View.php(226): include('F:\\xammp\\htdocs\\ITE311-GALORPOT\\app\\Views\\auth\\login.php')
+18 SYSTEMPATH\View\View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+19 SYSTEMPATH\Common.php(1167): CodeIgniter\View\View->render('auth/login', [], true)
+20 APPPATH\Controllers\Auth.php(133): view('auth/login', [])
+21 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\Auth->login()
+22 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+23 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+24 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+25 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+26 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-12-10 16:45:08 --> [Caused by] mysqli_sql_exception: Table 'lms_galorpot.ci_sessions' doesn't exist
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 327.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(327): mysqli->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:a877bd4d1c80707b164452657eeb4999\'
+AND `ip_address` = \'::1\'', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:a877bd4d1c80707b164452657eeb4999\'
+AND `ip_address` = \'::1\'')
+ 3 SYSTEMPATH\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:a877bd4d1c80707b164452657eeb4999\'
+AND `ip_address` = \'::1\'')
+ 4 SYSTEMPATH\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = :id:
+AND `ip_address` = :ip_address:', [...], false)
+ 5 SYSTEMPATH\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+ 6 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('a877bd4d1c80707b164452657eeb4999')
+ 7 SYSTEMPATH\Session\Session.php(912): session_start()
+ 8 SYSTEMPATH\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+ 9 SYSTEMPATH\Config\Services.php(715): CodeIgniter\Session\Session->start()
+10 SYSTEMPATH\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+11 SYSTEMPATH\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', [...])
+12 SYSTEMPATH\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', null)
+13 SYSTEMPATH\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+14 SYSTEMPATH\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', [])
+15 SYSTEMPATH\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+16 SYSTEMPATH\Common.php(968): service('session')
+17 APPPATH\Views\auth\login.php(16): session()
+18 SYSTEMPATH\View\View.php(226): include('F:\\xammp\\htdocs\\ITE311-GALORPOT\\app\\Views\\auth\\login.php')
+19 SYSTEMPATH\View\View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+20 SYSTEMPATH\Common.php(1167): CodeIgniter\View\View->render('auth/login', [], true)
+21 APPPATH\Controllers\Auth.php(133): view('auth/login', [])
+22 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\Auth->login()
+23 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+24 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+25 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+26 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+27 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-12-10 18:00:36 --> mysqli_sql_exception: Table 'lms_galorpot.ci_sessions' doesn't exist in F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php:327
+Stack trace:
+#0 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\MySQLi\Connection.php(327): mysqli->query('SELECT `data`\nF...', 0)
+#1 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `data`\nF...')
+#2 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `data`\nF...')
+#3 F:\xammp\htdocs\ITE311-GALORPOT\system\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`\nF...', Array, false)
+#4 F:\xammp\htdocs\ITE311-GALORPOT\system\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+#5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('68cc6c64fecd919...')
+#6 F:\xammp\htdocs\ITE311-GALORPOT\system\Session\Session.php(912): session_start()
+#7 F:\xammp\htdocs\ITE311-GALORPOT\system\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+#8 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\Services.php(715): CodeIgniter\Session\Session->start()
+#9 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+#10 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', Array)
+#11 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', NULL)
+#12 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+#13 F:\xammp\htdocs\ITE311-GALORPOT\system\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', Array)
+#14 F:\xammp\htdocs\ITE311-GALORPOT\system\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+#15 F:\xammp\htdocs\ITE311-GALORPOT\system\Common.php(968): service('session')
+#16 F:\xammp\htdocs\ITE311-GALORPOT\app\Controllers\Notifications.php(23): session()
+#17 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(933): App\Controllers\Notifications->get()
+#18 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Notifications))
+#19 F:\xammp\htdocs\ITE311-GALORPOT\system\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#20 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(363): CodeIgniter\CodeIgniter->run()
+#21 F:\xammp\htdocs\ITE311-GALORPOT\system\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#22 F:\xammp\htdocs\ITE311-GALORPOT\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#23 {main}
+CRITICAL - 2025-12-10 18:00:36 --> CodeIgniter\Database\Exceptions\DatabaseException: Table 'lms_galorpot.ci_sessions' doesn't exist
+[Method: GET, Route: notifications]
+in SYSTEMPATH\Database\BaseConnection.php on line 684.
+ 1 SYSTEMPATH\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = :id:
+AND `ip_address` = :ip_address:', [...], false)
+ 2 SYSTEMPATH\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+ 3 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('68cc6c64fecd91954df75dc444cdf987')
+ 4 SYSTEMPATH\Session\Session.php(912): session_start()
+ 5 SYSTEMPATH\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+ 6 SYSTEMPATH\Config\Services.php(715): CodeIgniter\Session\Session->start()
+ 7 SYSTEMPATH\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+ 8 SYSTEMPATH\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', [...])
+ 9 SYSTEMPATH\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', null)
+10 SYSTEMPATH\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+11 SYSTEMPATH\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', [])
+12 SYSTEMPATH\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+13 SYSTEMPATH\Common.php(968): service('session')
+14 APPPATH\Controllers\Notifications.php(23): session()
+15 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\Notifications->get()
+16 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Notifications))
+17 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+18 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+19 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+20 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-12-10 18:00:36 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Table 'lms_galorpot.ci_sessions' doesn't exist
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 332.
+ 1 SYSTEMPATH\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:68cc6c64fecd91954df75dc444cdf987\'
+AND `ip_address` = \'::1\'')
+ 2 SYSTEMPATH\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:68cc6c64fecd91954df75dc444cdf987\'
+AND `ip_address` = \'::1\'')
+ 3 SYSTEMPATH\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = :id:
+AND `ip_address` = :ip_address:', [...], false)
+ 4 SYSTEMPATH\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+ 5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('68cc6c64fecd91954df75dc444cdf987')
+ 6 SYSTEMPATH\Session\Session.php(912): session_start()
+ 7 SYSTEMPATH\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+ 8 SYSTEMPATH\Config\Services.php(715): CodeIgniter\Session\Session->start()
+ 9 SYSTEMPATH\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+10 SYSTEMPATH\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', [...])
+11 SYSTEMPATH\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', null)
+12 SYSTEMPATH\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+13 SYSTEMPATH\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', [])
+14 SYSTEMPATH\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+15 SYSTEMPATH\Common.php(968): service('session')
+16 APPPATH\Controllers\Notifications.php(23): session()
+17 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\Notifications->get()
+18 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Notifications))
+19 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+20 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+21 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+22 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-12-10 18:00:36 --> [Caused by] mysqli_sql_exception: Table 'lms_galorpot.ci_sessions' doesn't exist
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 327.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(327): mysqli->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:68cc6c64fecd91954df75dc444cdf987\'
+AND `ip_address` = \'::1\'', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:68cc6c64fecd91954df75dc444cdf987\'
+AND `ip_address` = \'::1\'')
+ 3 SYSTEMPATH\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = \'ci_session:68cc6c64fecd91954df75dc444cdf987\'
+AND `ip_address` = \'::1\'')
+ 4 SYSTEMPATH\Database\BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `data`
+FROM `ci_sessions`
+WHERE `id` = :id:
+AND `ip_address` = :ip_address:', [...], false)
+ 5 SYSTEMPATH\Session\Handlers\DatabaseHandler.php(135): CodeIgniter\Database\BaseBuilder->get()
+ 6 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->read('68cc6c64fecd91954df75dc444cdf987')
+ 7 SYSTEMPATH\Session\Session.php(912): session_start()
+ 8 SYSTEMPATH\Session\Session.php(243): CodeIgniter\Session\Session->startSession()
+ 9 SYSTEMPATH\Config\Services.php(715): CodeIgniter\Session\Session->start()
+10 SYSTEMPATH\Config\BaseService.php(312): CodeIgniter\Config\Services::session(Object(Config\Session), false)
+11 SYSTEMPATH\Config\BaseService.php(251): CodeIgniter\Config\BaseService::__callStatic('session', [...])
+12 SYSTEMPATH\Config\Services.php(668): CodeIgniter\Config\BaseService::getSharedInstance('session', null)
+13 SYSTEMPATH\Config\BaseService.php(321): CodeIgniter\Config\Services::session()
+14 SYSTEMPATH\Config\BaseService.php(202): CodeIgniter\Config\BaseService::__callStatic('session', [])
+15 SYSTEMPATH\Common.php(995): CodeIgniter\Config\BaseService::get('session')
+16 SYSTEMPATH\Common.php(968): service('session')
+17 APPPATH\Controllers\Notifications.php(23): session()
+18 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\Notifications->get()
+19 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Notifications))
+20 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+21 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+22 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+23 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+DEBUG - 2025-12-10 18:21:40 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\DatabaseHandler' driver.
+DEBUG - 2025-12-10 19:10:50 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\DatabaseHandler' driver.

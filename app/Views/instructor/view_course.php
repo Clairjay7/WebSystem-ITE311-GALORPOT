@@ -220,6 +220,20 @@
                     <?php if (empty($enrollments)): ?>
                         <p class="text-muted text-center py-3">No students enrolled yet.</p>
                     <?php else: ?>
+                        <!-- Search Form -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <form id="studentsSearchForm" class="d-flex">
+                                    <div class="input-group">
+                                        <input type="text" id="studentsSearchInput" class="form-control" placeholder="Search by student name or email..." name="search_term">
+                                        <button class="btn btn-outline-primary" type="submit">
+                                            <i class="fas fa-search"></i> Search
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -230,9 +244,9 @@
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="studentsContainer">
                                     <?php foreach ($enrollments as $enrollment): ?>
-                                        <tr>
+                                        <tr class="student-row" data-name="<?= strtolower(esc($enrollment['student_name'])) ?>" data-email="<?= strtolower(esc($enrollment['student_email'])) ?>">
                                             <td><?= esc($enrollment['student_name']) ?></td>
                                             <td><?= esc($enrollment['student_email']) ?></td>
                                             <td><?= date('M d, Y', strtotime($enrollment['enrollment_date'])) ?></td>
@@ -245,6 +259,70 @@
                                                         <i class="fas fa-user-minus"></i> Unenroll
                                                     </button>
                                                 </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Course Materials Section -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-file-alt"></i> Course Materials</h5>
+                    <a href="<?= site_url('/materials/upload/' . $course['id']) ?>" class="btn btn-sm btn-primary">
+                        <i class="fas fa-upload"></i> Upload Material
+                    </a>
+                </div>
+                <div class="card-body">
+                    <?php if (empty($materials)): ?>
+                        <p class="text-muted">No materials uploaded yet. <a href="<?= site_url('/materials/upload/' . $course['id']) ?>">Upload your first material</a>.</p>
+                    <?php else: ?>
+                        <!-- Search Form -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <form id="materialsSearchForm" class="d-flex">
+                                    <div class="input-group">
+                                        <input type="text" id="materialsSearchInput" class="form-control" placeholder="Search by file name..." name="search_term">
+                                        <button class="btn btn-outline-primary" type="submit">
+                                            <i class="fas fa-search"></i> Search
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>Uploaded Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="materialsContainer">
+                                    <?php foreach ($materials as $material): ?>
+                                        <tr class="material-row" data-file-name="<?= strtolower(esc($material['file_name'])) ?>">
+                                            <td>
+                                                <i class="fas fa-file"></i> <?= esc($material['file_name']) ?>
+                                            </td>
+                                            <td>
+                                                <?= date('M d, Y H:i', strtotime($material['created_at'])) ?>
+                                            </td>
+                                            <td>
+                                                <a href="<?= site_url('/materials/download/' . $material['id']) ?>" 
+                                                   class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-download"></i> Download
+                                                </a>
+                                                <a href="<?= site_url('/materials/delete/' . $material['id']) ?>" 
+                                                   class="btn btn-sm btn-danger"
+                                                   onclick="return confirm('Are you sure you want to delete this material?');">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -268,7 +346,7 @@
                                     <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
                                     <h5>Course Materials</h5>
                                     <p class="text-muted">Upload and manage course materials</p>
-                                    <a href="#" class="btn btn-primary">Manage Materials</a>
+                                    <a href="<?= site_url('/materials/upload/' . $course['id']) ?>" class="btn btn-primary">Manage Materials</a>
                                 </div>
                             </div>
                         </div>
@@ -330,6 +408,96 @@
         </div>
     </div>
 </div>
+
+<script>
+// Enrolled Students search functionality
+$(document).ready(function() {
+    <?php if (!empty($enrollments)): ?>
+    const originalStudents = $('#studentsContainer').html();
+    
+    // Instant client-side filtering for students
+    $('#studentsSearchInput').on('keyup', function() {
+        const searchValue = $(this).val().toLowerCase().trim();
+        
+        if (searchValue === '') {
+            $('#studentsContainer').html(originalStudents);
+            return;
+        }
+        
+        let visibleCount = 0;
+        $('.student-row').each(function() {
+            const name = $(this).data('name') || '';
+            const email = $(this).data('email') || '';
+            const text = (name + ' ' + email).toLowerCase();
+            
+            if (text.includes(searchValue)) {
+                $(this).show();
+                visibleCount++;
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        if (visibleCount === 0) {
+            if ($('#noStudentsRow').length === 0) {
+                $('#studentsContainer').append('<tr id="noStudentsRow"><td colspan="4" class="text-center text-muted">No students found matching your search.</td></tr>');
+            }
+        } else {
+            $('#noStudentsRow').remove();
+        }
+    });
+    
+    // Server-side search for students (if needed in future)
+    $('#studentsSearchForm').on('submit', function(e) {
+        e.preventDefault();
+        // For now, just use client-side filtering
+        $('#studentsSearchInput').trigger('keyup');
+    });
+    <?php endif; ?>
+
+    // Course Materials search functionality
+    <?php if (!empty($materials)): ?>
+    const originalMaterials = $('#materialsContainer').html();
+    
+    // Instant client-side filtering for materials
+    $('#materialsSearchInput').on('keyup', function() {
+        const searchValue = $(this).val().toLowerCase().trim();
+        
+        if (searchValue === '') {
+            $('#materialsContainer').html(originalMaterials);
+            return;
+        }
+        
+        let visibleCount = 0;
+        $('.material-row').each(function() {
+            const fileName = $(this).data('file-name') || '';
+            
+            if (fileName.includes(searchValue)) {
+                $(this).show();
+                visibleCount++;
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        if (visibleCount === 0) {
+            if ($('#noMaterialsRow').length === 0) {
+                $('#materialsContainer').append('<tr id="noMaterialsRow"><td colspan="3" class="text-center text-muted">No materials found matching your search.</td></tr>');
+            }
+        } else {
+            $('#noMaterialsRow').remove();
+        }
+    });
+    
+    // Server-side search for materials (if needed in future)
+    $('#materialsSearchForm').on('submit', function(e) {
+        e.preventDefault();
+        // For now, just use client-side filtering
+        $('#materialsSearchInput').trigger('keyup');
+    });
+    <?php endif; ?>
+});
+</script>
 
 <?= $this->endSection() ?>
 

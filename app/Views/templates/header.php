@@ -51,6 +51,24 @@ $roleLabel = $role ? strtoupper($role) : '';
         </li>
 
         <?php if ($isLoggedIn): ?>
+          <!-- Notifications Dropdown -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-bell"></i>
+              <span id="notificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none; font-size: 0.7rem; padding: 0.2em 0.4em;">
+                0
+              </span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="min-width: 350px; max-height: 400px; overflow-y: auto;">
+              <li><h6 class="dropdown-header">Notifications</h6></li>
+              <li><hr class="dropdown-divider"></li>
+              <li id="notificationList">
+                <div class="px-3 py-2 text-muted text-center">
+                  <small>No notifications</small>
+                </div>
+              </li>
+            </ul>
+          </li>
           <li class="nav-item">
             <a class="nav-link" href="<?= site_url('/logout') ?>">
               <i class="fas fa-sign-out-alt me-1"></i>Logout
